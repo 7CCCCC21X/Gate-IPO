@@ -677,6 +677,18 @@
 
     <div class="field">
       <label class="ttl">
+        <span data-i18n="estimator.finalPool">假设池子最终总投入</span>
+        <button type="button" id="resetFinalBtn" class="link-btn" data-i18n="estimator.useLive">使用实时值</button>
+      </label>
+      <div class="input-with-suffix">
+        <input id="finalInvest" type="number" step="1000" min="0" placeholder="—" />
+        <span id="finalInvestSuffix" class="suffix">USDT</span>
+      </div>
+      <div class="amount-formatted" id="finalInvestFormatted"></div>
+    </div>
+
+    <div class="field">
+      <label class="ttl">
         <span data-i18n="estimator.hour">投入时间</span>
         <span id="hourLabel" class="hour-chip">—</span>
       </label>
@@ -929,6 +941,9 @@ const I18N = {
     'estimator.amount': '投入金额',
     'estimator.amountNote': '（≥ 100）',
     'estimator.amountMin': '最低 100 {coin}',
+    'estimator.finalPool': '假设池子最终总投入',
+    'estimator.useLive': '使用实时值',
+    'estimator.finalPoolHint': '实时 {coin} · 输入你预计结束时的池子总额模拟中签率',
     'estimator.hour': '投入时间',
     'estimator.hourHint': '按 48 小时平均锁仓计算，越早投入权重越高',
     'estimator.qStart': '开始时投入',
@@ -1034,6 +1049,9 @@ const I18N = {
     'estimator.amount': 'Invest Amount',
     'estimator.amountNote': '(≥ 100)',
     'estimator.amountMin': 'Minimum 100 {coin}',
+    'estimator.finalPool': 'Assumed Final Pool Total',
+    'estimator.useLive': 'Use live',
+    'estimator.finalPoolHint': 'Live {coin} · set your projected end-of-window total to simulate',
     'estimator.hour': 'Entry Time',
     'estimator.hourHint': 'Weighted by 48h average lockup · the earlier you invest, the higher your weight',
     'estimator.qStart': 'At Start',
@@ -1172,6 +1190,7 @@ const state = {
   lastKlineOk: 0,
   hourInitialized: false,
   priceTouched: false,  // 用户是否手动改过价格
+  finalInvestTouched: false,  // 用户是否手动改过"假设最终池子总投入"
   timer: null,
   cdTimer: null,
   nextAt: 0,
@@ -1373,9 +1392,16 @@ function estimate(api, inputs) {
   let p = products.find(x => x.coin === inputs.pool) || null;
   const poolTotal = p ? +p.total_shares || POOL_FALLBACK[inputs.pool] : POOL_FALLBACK[inputs.pool];
   const userCap = p ? +p.user_top_share || USER_CAP_FALLBACK[inputs.pool] : USER_CAP_FALLBACK[inputs.pool];
-  const validNow = p ? +p.valid_invest_amount || 0 : 0;
+  let validNow = p ? +p.valid_invest_amount || 0 : 0;
   const investNow = p ? +p.invest_amount || 0 : 0;
   const price = p ? +p.price || 590 : 590;
+
+  // 用户覆盖"池子最终总投入"：按比例缩放 validNow（假设 valid 与 invest 同比例增长）
+  let finalInvestUsed = investNow;
+  if (inputs.finalInvestOverride && investNow > 0) {
+    finalInvestUsed = inputs.finalInvestOverride;
+    validNow = validNow * (inputs.finalInvestOverride / investNow);
+  }
 
   const X = inputs.amount;
   const t = inputs.hour;
@@ -1428,7 +1454,11 @@ function readInputs() {
   const pool = (document.querySelector('input[name="pool"]:checked') || {}).value || 'USDT';
   const amount = Math.max(0, Number($('amount').value) || 0);
   const hour = clamp(Number($('hour').value) || 0, 0, 48);
-  return { pool, amount, hour };
+  const finalInvestEl = document.getElementById('finalInvest');
+  const finalInvestVal = finalInvestEl ? parseFloat(finalInvestEl.value) : NaN;
+  const finalInvestOverride = (state.finalInvestTouched && isFinite(finalInvestVal) && finalInvestVal > 0)
+    ? finalInvestVal : null;
+  return { pool, amount, hour, finalInvestOverride };
 }
 
 function defaultHourOffset(startTs, endTs, now = Date.now()) {
@@ -1446,10 +1476,58 @@ function setHour(v) {
 }
 
 // ---------- 渲染 ----------
+function syncFormMeta(inputs) {
+  // 输入校验
+  const amountEl = $('amount');
+  const amountHint = $('amountHint');
+  const unitLabel = inputs.pool === 'compare' ? 'USDT' : inputs.pool;
+  if (inputs.amount < 100) {
+    amountEl.classList.add('invalid');
+    amountHint.textContent = t('estimator.amountMin', { coin: unitLabel });
+    amountHint.classList.add('err');
+  } else {
+    amountEl.classList.remove('invalid');
+    amountHint.textContent = '';
+    amountHint.classList.remove('err');
+  }
+  $('amountSuffix').textContent = unitLabel;
+  const cn = fmtChinese(inputs.amount);
+  $('amountFormatted').innerHTML = cn ? `≈ <b>${cn}</b> ${unitLabel} · ${fmtNum(inputs.amount, 0)}` : '';
+
+  // 同步"假设池子最终总投入"
+  const fiEl = $('finalInvest');
+  const fiSuf = $('finalInvestSuffix');
+  const fiFmt = $('finalInvestFormatted');
+  if (fiEl) {
+    // compare 模式默认按 USDT 池显示（只对 USDT 路径生效，给用户明确提示）
+    const refPool = inputs.pool === 'compare' ? 'USDT' : inputs.pool;
+    fiSuf.textContent = refPool;
+    const coinVal = (state.api && state.api.data && (state.api.data.products || []).find(x => x.coin === refPool));
+    const liveInvest = coinVal ? +coinVal.invest_amount || 0 : 0;
+    fiEl.placeholder = liveInvest > 0 ? fmtNum(liveInvest, 0) : '—';
+    if (!state.finalInvestTouched) fiEl.value = '';
+    const fiNum = parseFloat(fiEl.value);
+    const displayVal = isFinite(fiNum) && fiNum > 0 ? fiNum : liveInvest;
+    const cn2 = fmtChinese(displayVal);
+    fiFmt.innerHTML = cn2
+      ? `<span style="color:${state.finalInvestTouched ? 'var(--c-warn)' : 'var(--c-sub)'}">${state.finalInvestTouched ? '自定义' : '实时'} · <b>${cn2}</b> ${refPool}</span>`
+      : '';
+  }
+  // 人类可读的入场时间
+  const h = inputs.hour;
+  let hourText;
+  if (h < 0.25) hourText = t('estimator.hourAtStart');
+  else if (h > 47) hourText = t('estimator.hourLast', { h: (48 - h).toFixed(1) });
+  else hourText = t('estimator.hourMid', { h: h.toFixed(1) });
+  $('hourLabel').textContent = hourText;
+}
+
 function renderEstimator() {
   if (!state.api) return;
   const inputs = readInputs();
   const livePrice = latestClose(state.kline);
+
+  syncFormMeta(inputs);
 
   // 对比模式
   const singleModeEls = [document.getElementById('profitCard'), document.querySelector('#estimator .result-grid'), document.querySelector('#estimator .detail-panel')];
@@ -1464,7 +1542,7 @@ function renderEstimator() {
   if (cmpEl) cmpEl.style.display = 'none';
 
   const r = estimate(state.api, inputs);
-  // 同步实时价到输入框（用户没手动改过时）
+  // 同步实时价到输入框
   const priceEl = $('r-price');
   const priceCard = priceEl.closest('.price-card');
   if (!state.priceTouched && livePrice != null) {
@@ -1473,32 +1551,8 @@ function renderEstimator() {
   } else if (state.priceTouched) {
     priceCard.classList.add('manual');
   }
-  // 实际用于计算的价格：以输入框当前值为准
   const inputPrice = parseFloat(priceEl.value);
   const price = isFinite(inputPrice) && inputPrice > 0 ? inputPrice : livePrice;
-
-  // 输入校验
-  const amountEl = $('amount');
-  const amountHint = $('amountHint');
-  if (inputs.amount < 100) {
-    amountEl.classList.add('invalid');
-    amountHint.textContent = t('estimator.amountMin', { coin: inputs.pool });
-    amountHint.classList.add('err');
-  } else {
-    amountEl.classList.remove('invalid');
-    amountHint.textContent = '';
-    amountHint.classList.remove('err');
-  }
-  $('amountSuffix').textContent = inputs.pool;
-  const cn = fmtChinese(inputs.amount);
-  $('amountFormatted').innerHTML = cn ? `≈ <b>${cn}</b> ${inputs.pool} · ${fmtNum(inputs.amount, 0)}` : '';
-  // 人类可读的入场时间标签
-  const h = inputs.hour;
-  let hourText;
-  if (h < 0.25) hourText = t('estimator.hourAtStart');
-  else if (h > 47) hourText = t('estimator.hourLast', { h: (48 - h).toFixed(1) });
-  else hourText = t('estimator.hourMid', { h: h.toFixed(1) });
-  $('hourLabel').textContent = hourText;
 
   // 结果卡片
   // 主卡：简洁，只显示核心数字和关键告警
@@ -1714,8 +1768,9 @@ function renderCompareView(inputs, livePrice) {
   const price = state.priceTouched && isFinite(manual) && manual > 0 ? manual : livePrice;
 
   // 分别估算两池（用同样的金额和时间）
-  const rU = estimate(state.api, { ...inputs, pool: 'USDT', amount: inputs.amount });
-  const rG = estimate(state.api, { ...inputs, pool: 'GUSD', amount: inputs.amount });
+  // 自定义"池子最终总投入"只对 USDT 路径生效（GUSD 池规模不同，沿用实时值）
+  const rU = estimate(state.api, { ...inputs, pool: 'USDT' });
+  const rG = estimate(state.api, { ...inputs, pool: 'GUSD', finalInvestOverride: null });
 
   // 盈亏计算
   function poolPnl(r, isGusd) {
@@ -1935,6 +1990,16 @@ $('resetPriceBtn').addEventListener('click', () => {
   state.priceTouched = false;
   const live = latestClose(state.kline);
   if (live != null) $('r-price').value = live.toFixed(2);
+  renderEstimator();
+});
+
+$('finalInvest').addEventListener('input', () => {
+  state.finalInvestTouched = true;
+  renderEstimator();
+});
+$('resetFinalBtn').addEventListener('click', () => {
+  state.finalInvestTouched = false;
+  $('finalInvest').value = '';
   renderEstimator();
 });
 document.querySelectorAll('input[name="pool"]').forEach(el => {
