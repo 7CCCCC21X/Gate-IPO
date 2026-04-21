@@ -226,6 +226,18 @@
   .result-grid .card .value { font-size:18px; font-weight:800; letter-spacing:-.3px; color:var(--c-text); }
   .result-grid .card .value.green { color:var(--c-success); }
   .result-grid .card .value.red { color:var(--c-error); }
+  /* 成本卡明细 */
+  .cost-card .cost-rows {
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--c-border);
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .cost-card .cost-row {
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:11px; color:var(--c-sub);
+  }
+  .cost-card .cost-row b {
+    color:var(--c-text); font-weight:600; font-variant-numeric:tabular-nums; font-size:12px;
+  }
   /* 可编辑价格卡 */
   .price-card input[type="number"] {
     width:100%; background:transparent; color:var(--c-text);
@@ -660,7 +672,15 @@
 
   <div class="result-grid">
     <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
-    <div class="card"><div class="label" data-i18n="result.cost">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
+    <div class="card cost-card">
+      <div class="label" data-i18n="result.cost">实际占用资金</div>
+      <div id="r-cost" class="value">—</div>
+      <div class="cost-rows">
+        <div class="cost-row"><span data-i18n="result.costLockup">锁仓金额</span><b id="r-cost-lockup">—</b></div>
+        <div class="cost-row"><span data-i18n="result.costRefund">预计退款</span><b id="r-cost-refund">—</b></div>
+        <div class="cost-row"><span data-i18n="result.costUtil">资金利用率</span><b id="r-cost-util">—</b></div>
+      </div>
+    </div>
     <div class="card price-card">
       <div class="label" style="display:flex;justify-content:space-between;align-items:center">
         <span data-i18n="result.spotPrice">当前预上市价</span>
@@ -806,7 +826,10 @@ const I18N = {
     'result.spcx': '预计获得 SPCX',
     'result.spcxCapped': '⚠️ 受单用户上限 {cap} 截断（原 {raw}）',
     'result.spcxRaw': '原值 {raw} · 上限 {cap}',
-    'result.cost': '认购成本',
+    'result.cost': '实际占用资金',
+    'result.costLockup': '锁仓金额',
+    'result.costRefund': '预计退款',
+    'result.costUtil': '资金利用率',
     'result.costSub': '锁仓 {lockup} · 退款 {refund} · 资金利用率 {util}',
     'result.spotPrice': '当前预上市价',
     'result.spotNote': '假设单位：USDT · 最新收盘',
@@ -892,7 +915,10 @@ const I18N = {
     'result.spcx': 'Estimated SPCX',
     'result.spcxCapped': '⚠️ Capped by per-user max {cap} (raw {raw})',
     'result.spcxRaw': 'raw {raw} · cap {cap}',
-    'result.cost': 'Subscription Cost',
+    'result.cost': 'Actual Capital Used',
+    'result.costLockup': 'Lockup',
+    'result.costRefund': 'Refund',
+    'result.costUtil': 'Utilization',
     'result.costSub': 'Lockup {lockup} · Refund {refund} · Utilization {util}',
     'result.spotPrice': 'Current Pre-Market Price',
     'result.spotNote': 'Assumed unit: USDT · Latest close',
@@ -1308,7 +1334,9 @@ function renderEstimator() {
     : '';
 
   $('r-cost').textContent = fmtNum(r.actualCost) + ' ' + r.pool;
-  $('r-cost-sub').textContent = r.pool + ' · ' + (r.utilization * 100).toFixed(2) + '%';
+  $('r-cost-lockup').textContent = fmtNum(r.lockup) + ' ' + r.pool;
+  $('r-cost-refund').textContent = fmtNum(r.refund) + ' ' + r.pool;
+  $('r-cost-util').textContent = (r.utilization * 100).toFixed(2) + '%';
 
   // 明细区
   $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
