@@ -14,7 +14,10 @@
     --c-error:#dc2626;   --c-error-bg:rgba(220,38,38,.06);
     --c-warn:#f59e0b;
     --radius:14px;
-    --shadow:0 4px 24px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    --radius-lg:16px;
+    --radius-sm:10px;
+    --shadow:0 1px 2px rgba(0,0,0,.03), 0 8px 24px rgba(0,0,0,.035);
+    --divider:rgba(0,0,0,.06);
     /* 兼容旧类名 */
     --bg:var(--c-bg); --panel:var(--c-card); --panel-2:var(--c-card2);
     --border:var(--c-border); --text:var(--c-text); --muted:var(--c-sub);
@@ -27,7 +30,8 @@
       --c-primary:#4d8eff; --c-primary-light:rgba(77,142,255,.12); --c-primary-dark:#6ea0ff;
       --c-success:#34d399; --c-success-bg:rgba(52,211,153,.1);
       --c-error:#f87171;   --c-error-bg:rgba(248,113,113,.08);
-      --shadow:0 4px 24px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+      --shadow:0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25);
+      --divider:rgba(255,255,255,.06);
     }
   }
   [data-theme="dark"] {
@@ -36,18 +40,26 @@
     --c-primary:#4d8eff; --c-primary-light:rgba(77,142,255,.12); --c-primary-dark:#6ea0ff;
     --c-success:#34d399; --c-success-bg:rgba(52,211,153,.1);
     --c-error:#f87171;   --c-error-bg:rgba(248,113,113,.08);
-    --shadow:0 4px 24px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+    --shadow:0 1px 2px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.25);
+    --divider:rgba(255,255,255,.06);
   }
   * { box-sizing: border-box; margin:0; padding:0; }
   body {
     padding:0; background:var(--c-bg); color:var(--c-text); line-height:1.5;
-    font-family:-apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing:antialiased;
+    font-family:-apple-system, BlinkMacSystemFont, "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    font-feature-settings: "ss01", "cv11";
+  }
+  /* 金融面板式数字：等宽 + 斜杠零 */
+  .fin-num, .profit-value, .hero-price-row .val, .result-value,
+  .chart-price, .cmp-main-value, .pool-value, .pl-value b, .pl-value {
+    font-variant-numeric: tabular-nums slashed-zero;
+    font-feature-settings: "tnum" 1, "ss01" 1, "zero" 1;
   }
   header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
   h1 { font-size:22px; font-weight:700; letter-spacing:-.3px; color:var(--c-primary); }
   h2 { font-size:16px; font-weight:700; margin:0 0 14px; letter-spacing:-.2px; }
-  h3 { font-size:13px; margin:18px 0 10px; color:var(--c-sub); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  h3 { font-size:12px; margin:18px 0 10px; color:var(--c-sub); font-weight:500; text-transform:uppercase; letter-spacing:.7px; }
   .status { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--c-sub);
     padding:5px 12px; border-radius:999px; background:var(--c-card); border:1px solid var(--c-border); }
   .status .dot { width:6px; height:6px; border-radius:50%; background:var(--c-sub); }
@@ -82,7 +94,7 @@
   }
   .quick-btns button.active:hover { background:var(--c-primary-dark); }
   .card {
-    background:var(--c-card); border:1px solid var(--c-border); border-radius:20px;
+    background:var(--c-card); border:1px solid var(--c-border); border-radius:var(--radius-lg);
     padding:24px; margin-bottom:16px; box-shadow:var(--shadow);
     transition:box-shadow .2s, transform .2s;
   }
@@ -237,9 +249,9 @@
     position:absolute; right:14px; top:50%; transform:translateY(-50%);
     font-size:13px; color:var(--c-sub); font-weight:600; pointer-events:none;
   }
-  .amount-formatted { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
+  .amount-formatted { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; opacity:0.85; }
   .amount-formatted b { color:var(--c-text); font-weight:600; font-variant-numeric:tabular-nums; }
-  .field .hint { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
+  .field .hint { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; opacity:0.8; }
   .field .hint.err { color:var(--c-error); }
   .field .hint-info {
     background:var(--c-primary-light); color:var(--c-primary);
@@ -291,8 +303,8 @@
     justify-content:space-between; flex-wrap:wrap;
   }
   .result-head .result-title {
-    font-size:11px; color:var(--c-sub); font-weight:600;
-    text-transform:uppercase; letter-spacing:.5px; flex:1; min-width:0;
+    font-size:11px; color:var(--c-sub); font-weight:500;
+    text-transform:uppercase; letter-spacing:.6px; flex:1; min-width:0;
   }
   .result-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
   .result-card-spcx  .result-dot { background:#0066ff; box-shadow:0 0 8px rgba(0,102,255,0.5); }
@@ -303,19 +315,19 @@
     color:var(--c-text); font-variant-numeric:tabular-nums; line-height:1.1;
   }
   .result-card .result-sub {
-    font-size:11px; color:var(--c-sub); margin-top:6px; line-height:1.4;
+    font-size:11px; color:var(--c-sub); margin-top:6px; line-height:1.4; opacity:0.85;
   }
   @media (max-width: 640px) {
     .result-card .result-value { font-size:20px; }
   }
   /* 成本卡明细 */
   .cost-card .cost-rows {
-    margin-top:10px; padding-top:10px; border-top:1px dashed var(--c-border);
+    margin-top:10px; padding-top:10px; border-top:1px dashed var(--divider);
     display:flex; flex-direction:column; gap:4px;
   }
   .cost-card .cost-row {
     display:flex; justify-content:space-between; align-items:baseline;
-    font-size:11px; color:var(--c-sub);
+    font-size:11px; color:var(--c-sub); opacity:0.9;
   }
   .cost-card .cost-row b {
     color:var(--c-text); font-weight:600; font-variant-numeric:tabular-nums; font-size:12px;
@@ -431,7 +443,7 @@
   /* 头条：预计盈亏大卡 */
   .profit-card {
     margin:0; padding:28px 24px 22px;
-    border-radius:16px; text-align:center;
+    border-radius:var(--radius-lg); text-align:center;
     transition:background .25s ease, border-color .25s ease, box-shadow .25s ease;
     border:1.5px solid var(--c-border); background:var(--c-card2);
     position:relative; overflow:hidden;
@@ -447,8 +459,9 @@
     box-shadow:0 6px 24px rgba(220,38,38,0.12);
   }
   .profit-card .profit-label {
-    font-size:12px; color:var(--c-sub); margin-bottom:10px;
-    text-transform:uppercase; letter-spacing:.5px; font-weight:600;
+    font-size:11px; color:var(--c-sub); margin-bottom:10px;
+    text-transform:uppercase; letter-spacing:.8px; font-weight:500;
+    opacity:0.85;
   }
   .profit-card .profit-value {
     font-size:40px; font-weight:800; letter-spacing:-1px; line-height:1.1;
@@ -457,7 +470,7 @@
   .profit-card.negative .profit-value { color:var(--c-error);   text-shadow:0 2px 20px rgba(220,38,38,0.15); }
   .profit-lines {
     margin:18px auto 0; max-width:360px;
-    padding-top:14px; border-top:1px dashed var(--c-border);
+    padding-top:14px; border-top:1px dashed var(--divider);
     display:flex; flex-direction:column; gap:8px;
   }
   .profit-line {
@@ -534,7 +547,7 @@
     display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;
   }
   .pool-stat { min-width:0; }
-  .pool-label { font-size:11px; color:var(--c-sub); margin-bottom:3px; }
+  .pool-label { font-size:10px; color:var(--c-sub); margin-bottom:3px; font-weight:500; letter-spacing:.3px; opacity:0.85; }
   .pool-value {
     font-size:15px; font-weight:700; font-variant-numeric:tabular-nums;
     color:var(--c-text); letter-spacing:-.2px;
@@ -633,7 +646,7 @@
   .chart-tooltip .tt-row .v { font-weight:700; font-size:11px; }
   .chart-tooltip .tt-row .v.pos { color:var(--c-success); }
   .chart-tooltip .tt-row .v.neg { color:var(--c-error); }
-  .chart-tooltip hr { border:0; border-top:1px dashed var(--c-border); margin:6px 0; }
+  .chart-tooltip hr { border:0; border-top:1px dashed var(--divider); margin:6px 0; }
   .chart-range { display:flex; gap:6px; justify-content:flex-end; margin-top:10px; }
   .chart-range button {
     background:transparent; color:var(--c-sub); border:1.5px solid var(--c-border);
@@ -652,7 +665,7 @@
   /* 项目 hero */
   .hero {
     background:linear-gradient(135deg, var(--c-card) 0%, var(--c-card2) 100%);
-    border:1px solid var(--c-border); border-radius:20px; padding:24px 28px;
+    border:1px solid var(--c-border); border-radius:var(--radius-lg); padding:24px 28px;
     margin-bottom:16px; box-shadow:var(--shadow);
   }
   .hero-top {
