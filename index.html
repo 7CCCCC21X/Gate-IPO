@@ -252,11 +252,11 @@
 <div class="controls">
   <label>数据源
     <select id="src">
-      <option value="auto">自动（推荐）</option>
-      <option value="local">本地代理</option>
-      <option value="corsproxy">corsproxy.io</option>
+      <option value="codetabs">codetabs.com（推荐）</option>
+      <option value="local">本地代理 /api</option>
+      <option value="auto">自动回退</option>
       <option value="allorigins">allorigins.win</option>
-      <option value="codetabs">codetabs.com</option>
+      <option value="corsproxy">corsproxy.io</option>
       <option value="direct">直连</option>
     </select>
   </label>
@@ -383,7 +383,7 @@ const KLINE_SOURCES = {
 
 // ---------- 状态 ----------
 const state = {
-  src: 'auto',
+  src: 'codetabs',
   intervalSec: 10,
   pid: 2,
   api: null,
@@ -460,10 +460,10 @@ async function fetchFrom(label, sources, buildArg, validate, workingField) {
   const fileMode = location.protocol === 'file:';
   const order = userSrc === 'auto'
     ? (working
-        ? [working, 'local', 'corsproxy', 'allorigins', 'codetabs', 'direct']
+        ? [working, 'codetabs', 'local', 'allorigins', 'corsproxy', 'direct']
         : (fileMode
-            ? ['corsproxy', 'allorigins', 'codetabs', 'direct']
-            : ['local', 'corsproxy', 'allorigins', 'codetabs', 'direct']))
+            ? ['codetabs', 'allorigins', 'corsproxy', 'direct']
+            : ['codetabs', 'local', 'allorigins', 'corsproxy', 'direct']))
     : [userSrc];
 
   const seen = new Set();
@@ -870,7 +870,7 @@ function startLoop() {
 // ---------- 持久化 ----------
 function persist() {
   try {
-    localStorage.setItem('gate-spcx-cfg', JSON.stringify({
+    localStorage.setItem('gate-spcx-cfg-v2', JSON.stringify({
       src: state.src, intervalSec: state.intervalSec, pid: state.pid,
       pool: (document.querySelector('input[name="pool"]:checked') || {}).value,
       amount: $('amount').value,
@@ -879,7 +879,7 @@ function persist() {
 }
 function restore() {
   try {
-    const s = JSON.parse(localStorage.getItem('gate-spcx-cfg') || '{}');
+    const s = JSON.parse(localStorage.getItem('gate-spcx-cfg-v2') || '{}');
     if (s.src) state.src = s.src;
     if (s.intervalSec) state.intervalSec = s.intervalSec;
     if (s.pid) state.pid = s.pid;
