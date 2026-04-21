@@ -79,7 +79,11 @@
   .card {
     background:var(--c-card); border:1px solid var(--c-border); border-radius:20px;
     padding:24px; margin-bottom:16px; box-shadow:var(--shadow);
+    transition:box-shadow .2s, transform .2s;
   }
+  .result-grid .card { transition:border-color .15s, transform .15s; }
+  .result-grid .card:hover { transform:translateY(-2px); }
+  svg#chart path { transition:d .25s ease; }
   .card .label { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .card .value { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
   .card .sub { color:var(--muted); font-size:12px; margin-top:4px; }
@@ -513,6 +517,36 @@ function fmtUSD(n) {
   if (x >= 1e6)  return '$' + (x/1e6).toFixed(2) + 'M';
   return '$' + fmtNum(x);
 }
+// 数字平滑过渡：把元素从当前数值滚动到新值
+const _tweens = new WeakMap();
+function tweenNumber(el, to, opts = {}) {
+  const decimals = opts.decimals != null ? opts.decimals : 2;
+  const prefix = opts.prefix || '';
+  const suffix = opts.suffix || '';
+  const duration = opts.duration != null ? opts.duration : 600;
+  const sign = opts.sign === true;
+  const fromAttr = el.dataset._tweenVal;
+  const from = fromAttr != null ? parseFloat(fromAttr) : (parseFloat(String(el.textContent).replace(/[^\d.\-]/g, '')) || 0);
+  const target = isFinite(+to) ? +to : 0;
+  if (Math.abs(target - from) < Math.pow(10, -decimals)) {
+    el.textContent = prefix + (sign && target > 0 ? '+' : '') + fmtNum(target, decimals) + suffix;
+    el.dataset._tweenVal = String(target);
+    return;
+  }
+  const prev = _tweens.get(el);
+  if (prev) cancelAnimationFrame(prev);
+  const start = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+  function step(now) {
+    const t = Math.min(1, (now - start) / duration);
+    const v = from + (target - from) * ease(t);
+    el.textContent = prefix + (sign && v > 0 ? '+' : '') + fmtNum(v, decimals) + suffix;
+    if (t < 1) _tweens.set(el, requestAnimationFrame(step));
+    else { el.dataset._tweenVal = String(target); _tweens.delete(el); }
+  }
+  _tweens.set(el, requestAnimationFrame(step));
+}
+
 function fmtChinese(n) {
   const x = Number(n);
   if (!isFinite(x) || x <= 0) return '';
@@ -766,7 +800,7 @@ function renderEstimator() {
   $('r-ratio').textContent = fmtPct(r.shareRatio * 100);
   $('r-ratio-sub').textContent = r.note || `池当前加权总和 ${fmtNum(r.validNow)}`;
 
-  $('r-spcx').textContent = fmtNum(r.spcx, 4) + ' SPCX';
+  tweenNumber($('r-spcx'), r.spcx, { decimals: 4, suffix: ' SPCX', duration: 500 });
   $('r-spcx-sub').textContent = r.cappedByTop
     ? `⚠️ 受单用户上限 ${r.userCap} 截断（原 ${fmtNum(r.spcxRaw, 4)}）`
     : `原值 ${fmtNum(r.spcxRaw, 4)} · 上限 ${r.userCap}`;
@@ -789,8 +823,7 @@ function renderEstimator() {
     const lockupRoi = r.lockup > 0 ? (profit / r.lockup * 100) : 0;
     pCard.classList.toggle('positive', profit >= 0);
     pCard.classList.toggle('negative', profit < 0);
-    $('profitValue').textContent =
-      (profit >= 0 ? '+' : '') + fmtNum(profit, 2) + ' ' + r.pool;
+    tweenNumber($('profitValue'), profit, { decimals: 2, sign: true, suffix: ' ' + r.pool, duration: 700 });
     $('profitSub').innerHTML =
       `<div>SPCX 涨跌 <b style="color:inherit">${tokenRoi >= 0 ? '+' : ''}${tokenRoi.toFixed(2)}%</b> · ` +
       `锁仓 ${fmtNum(r.lockup)} 回报 <b style="color:inherit">${lockupRoi >= 0 ? '+' : ''}${lockupRoi.toFixed(3)}%</b></div>` +
@@ -915,7 +948,7 @@ function renderHero() {
     const first = candles[0].c;
     const delta = last - first;
     const pct = first > 0 ? (delta / first * 100) : 0;
-    $('heroSpot').textContent = last.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    tweenNumber($('heroSpot'), last, { decimals: 4, duration: 600 });
     const dEl = $('heroDelta');
     dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
     dEl.className = 'delta ' + (Math.abs(delta) < 1e-6 ? 'flat' : (delta >= 0 ? 'up' : 'down'));
