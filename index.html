@@ -202,6 +202,11 @@
     font-size:10px; font-weight:700; cursor:help; margin-left:6px;
     vertical-align:middle;
   }
+  .hour-chip {
+    display:inline-block; padding:2px 10px; border-radius:999px;
+    background:var(--c-primary-light); color:var(--c-primary);
+    font-size:12px; font-weight:600; margin-left:8px; vertical-align:middle;
+  }
   .radio-row { display:flex; gap:8px; flex-wrap:wrap; }
   .radio-row label {
     flex:1; min-width:120px; display:inline-flex; align-items:center; gap:8px;
@@ -241,6 +246,33 @@
     font-size:11px; font-weight:500; transition:color .15s;
   }
   .binance-link:hover { color:#F0B90B; }
+  /* 明细折叠面板 */
+  .detail-panel { margin-top:16px; }
+  .detail-panel > summary {
+    list-style:none; cursor:pointer;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:8px 16px; border-radius:999px;
+    background:var(--c-card2); border:1.5px solid var(--c-border);
+    font-size:13px; font-weight:600; color:var(--c-sub);
+    transition:all .15s;
+  }
+  .detail-panel > summary::-webkit-details-marker { display:none; }
+  .detail-panel > summary:hover { border-color:var(--c-primary); color:var(--c-primary); }
+  .detail-panel > summary .arrow { transition:transform .2s; }
+  .detail-panel[open] > summary { background:var(--c-primary-light); color:var(--c-primary); border-color:var(--c-primary); }
+  .detail-panel[open] > summary .arrow { transform:rotate(180deg); }
+  .detail-body { margin-top:14px; }
+  .detail-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px;
+    margin-bottom:16px;
+  }
+  .detail-card {
+    background:var(--c-card2); border:1px solid var(--c-border);
+    border-radius:var(--radius); padding:12px 14px;
+  }
+  .detail-label { font-size:11px; color:var(--c-sub); margin-bottom:4px; }
+  .detail-value { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--c-text); }
+  .detail-sub { font-size:11px; color:var(--c-sub); margin-top:4px; line-height:1.4; }
   /* 头条：预计盈亏大卡 */
   .profit-card {
     margin:16px 0 4px; padding:20px; border-radius:var(--radius);
@@ -607,17 +639,16 @@
 
     <div class="field">
       <label class="ttl">
-        <span data-i18n="estimator.hour">入场小时偏移</span>
-        <span id="hourLabel" style="color:var(--text)">0.00h</span>
-        <span class="info-tip" data-i18n-title="estimator.hourTip" title="">ⓘ</span>
+        <span data-i18n="estimator.hour">投入时间</span>
+        <span id="hourLabel" class="hour-chip">—</span>
       </label>
       <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
       <div class="quick-btns">
-        <button data-q="start" data-i18n="estimator.qStart">认购开始时</button>
-        <button data-q="now" data-i18n="estimator.qNow">现在</button>
-        <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h</button>
+        <button data-q="start" data-i18n="estimator.qStart">开始时投入</button>
+        <button data-q="now" data-i18n="estimator.qNow">现在投入</button>
+        <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h 投入</button>
       </div>
-      <div class="hint hint-info" data-i18n="estimator.hourHint">模拟你在 48h 认购窗口的第几小时投入 · 越早投入加权均值越高，可获得 SPCX 越多</div>
+      <div class="hint hint-info" data-i18n="estimator.hourHint">按 48 小时平均锁仓计算，越早投入权重越高</div>
     </div>
   </div>
 
@@ -628,7 +659,6 @@
   </div>
 
   <div class="result-grid">
-    <div class="card"><div class="label" data-i18n="result.avg">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.cost">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
     <div class="card price-card">
@@ -647,20 +677,46 @@
     </div>
   </div>
 
-  <h3><span data-i18n="pnl.title">盈亏表</span> <span id="pnlSubTitle" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px" data-i18n="pnl.subtitle">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
-  <div class="table-wrap">
-    <table class="pnl" id="pnlTable">
-      <thead><tr>
-        <th data-i18n="pnl.col.exit">退出价</th>
-        <th data-i18n="pnl.col.price">价格 (USDT)</th>
-        <th data-i18n="pnl.col.revenue">收入</th>
-        <th data-i18n="pnl.col.profit">盈亏</th>
-        <th data-i18n="pnl.col.tokenRoi">币价 ROI</th>
-        <th data-i18n="pnl.col.lockupRoi">锁仓 ROI</th>
-      </tr></thead>
-      <tbody id="pnlBody"></tbody>
-    </table>
-  </div>
+  <details class="detail-panel">
+    <summary>
+      <span data-i18n="detail.title">查看计算明细</span>
+      <svg class="arrow" viewBox="0 0 12 12" width="12" height="12"><path d="M2 4 L6 8 L10 4" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    </summary>
+    <div class="detail-body">
+      <div class="detail-grid">
+        <div class="detail-card">
+          <div class="detail-label" data-i18n="result.avg">48h 加权均值</div>
+          <div class="detail-value" id="r-avg">—</div>
+          <div class="detail-sub" id="r-avg-sub"></div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-label" data-i18n="detail.spcxRaw">SPCX 原值 / 上限</div>
+          <div class="detail-value" id="r-spcx-raw">—</div>
+          <div class="detail-sub" id="r-spcx-raw-sub"></div>
+        </div>
+        <div class="detail-card">
+          <div class="detail-label" data-i18n="detail.refund">退款 / 资金利用率</div>
+          <div class="detail-value" id="r-refund">—</div>
+          <div class="detail-sub" id="r-refund-sub"></div>
+        </div>
+      </div>
+
+      <h3><span data-i18n="pnl.title">盈亏表</span> <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px" data-i18n="pnl.subtitle">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
+      <div class="table-wrap">
+        <table class="pnl" id="pnlTable">
+          <thead><tr>
+            <th data-i18n="pnl.col.exit">退出价</th>
+            <th data-i18n="pnl.col.price">价格 (USDT)</th>
+            <th data-i18n="pnl.col.revenue">收入</th>
+            <th data-i18n="pnl.col.profit">盈亏</th>
+            <th data-i18n="pnl.col.tokenRoi">币价 ROI</th>
+            <th data-i18n="pnl.col.lockupRoi">锁仓 ROI</th>
+          </tr></thead>
+          <tbody id="pnlBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </details>
 </section>
 
 <section class="card" id="chartCard">
@@ -725,17 +781,23 @@ const I18N = {
     'estimator.amount': '投入金额',
     'estimator.amountNote': '（≥ 100）',
     'estimator.amountMin': '最低 100 {coin}',
-    'estimator.hour': '入场小时偏移',
-    'estimator.hourHint': '模拟你在 48h 认购窗口的第几小时投入 · 越早投入加权均值越高，可获得 SPCX 越多',
-    'estimator.hourTip': '默认按"认购开始时"（最理想情况）估算。你可以拖动滑块或点下方按钮模拟其他入场时机。',
-    'estimator.qStart': '认购开始时',
-    'estimator.qNow': '现在',
-    'estimator.qLast': '结束前 1h',
+    'estimator.hour': '投入时间',
+    'estimator.hourHint': '按 48 小时平均锁仓计算，越早投入权重越高',
+    'estimator.qStart': '开始时投入',
+    'estimator.qNow': '现在投入',
+    'estimator.qLast': '结束前 1h 投入',
+    'estimator.hourAtStart': '开始时',
+    'estimator.hourAtNow': '现在（{h}h 后）',
+    'estimator.hourLast': '结束前 {h}h',
+    'estimator.hourMid': '开始后 {h}h',
     'estimator.profitLabel': '当前盘前价下的预计盈亏',
     'estimator.profitNoPrice': '盘前行情暂不可用',
     'estimator.profitWaiting': '等待中签结果…',
     'estimator.profitFormula': 'SPCX 涨跌 {tokenRoi} · 锁仓 {lockup} 回报 {lockupRoi}',
     'estimator.profitDetail': '{spcx} SPCX × {price} − 消耗 {cost} = {profit} {coin}',
+    'detail.title': '查看计算明细（48h 加权均值 · 退款 · 盈亏表）',
+    'detail.spcxRaw': 'SPCX 原值 / 上限',
+    'detail.refund': '退款 / 资金利用率',
     'result.avg': '48h 加权均值',
     'result.avgFormula': '= {x} × (48 − {h}) / 48',
     'result.ratio': '预计中签率',
@@ -805,17 +867,23 @@ const I18N = {
     'estimator.amount': 'Invest Amount',
     'estimator.amountNote': '(≥ 100)',
     'estimator.amountMin': 'Minimum 100 {coin}',
-    'estimator.hour': 'Entry Hour Offset',
-    'estimator.hourHint': 'Simulate which hour of the 48h subscription window you invest · earlier = higher weighted average = more SPCX',
-    'estimator.hourTip': 'Defaults to "At Start" (best case). Drag the slider or use buttons below to simulate other entry timings.',
+    'estimator.hour': 'Entry Time',
+    'estimator.hourHint': 'Weighted by 48h average lockup · the earlier you invest, the higher your weight',
     'estimator.qStart': 'At Start',
     'estimator.qNow': 'Now',
     'estimator.qLast': 'Last 1h',
+    'estimator.hourAtStart': 'At start',
+    'estimator.hourAtNow': 'Now ({h}h in)',
+    'estimator.hourLast': '{h}h before end',
+    'estimator.hourMid': '{h}h in',
     'estimator.profitLabel': 'Estimated P&L at Current Pre-Market Price',
     'estimator.profitNoPrice': 'Pre-market quote unavailable',
     'estimator.profitWaiting': 'Waiting for allocation…',
     'estimator.profitFormula': 'Token {tokenRoi} · {lockup} lockup return {lockupRoi}',
     'estimator.profitDetail': '{spcx} SPCX × {price} − consumed {cost} = {profit} {coin}',
+    'detail.title': 'View calculation details (48h avg · refund · P&L)',
+    'detail.spcxRaw': 'SPCX raw / cap',
+    'detail.refund': 'Refund / utilization',
     'result.avg': '48h Weighted Avg',
     'result.avgFormula': '= {x} × (48 − {h}) / 48',
     'result.ratio': 'Allocation Ratio',
@@ -1224,19 +1292,35 @@ function renderEstimator() {
   $('amountSuffix').textContent = inputs.pool;
   const cn = fmtChinese(inputs.amount);
   $('amountFormatted').innerHTML = cn ? `≈ <b>${cn}</b> ${inputs.pool} · ${fmtNum(inputs.amount, 0)}` : '';
-  $('hourLabel').textContent = inputs.hour.toFixed(2) + 'h';
+  // 人类可读的入场时间标签
+  const h = inputs.hour;
+  let hourText;
+  if (h < 0.25) hourText = t('estimator.hourAtStart');
+  else if (h > 47) hourText = t('estimator.hourLast', { h: (48 - h).toFixed(1) });
+  else hourText = t('estimator.hourMid', { h: h.toFixed(1) });
+  $('hourLabel').textContent = hourText;
 
   // 结果卡片
-  $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
-  $('r-avg-sub').textContent = t('result.avgFormula', { x: fmtNum(inputs.amount), h: inputs.hour.toFixed(2) });
-
+  // 主卡：简洁，只显示核心数字和关键告警
   tweenNumber($('r-spcx'), r.spcx, { decimals: 4, suffix: ' SPCX', duration: 500 });
   $('r-spcx-sub').textContent = r.cappedByTop
     ? t('result.spcxCapped', { cap: r.userCap, raw: fmtNum(r.spcxRaw, 4) })
-    : t('result.spcxRaw', { raw: fmtNum(r.spcxRaw, 4), cap: r.userCap });
+    : '';
 
   $('r-cost').textContent = fmtNum(r.actualCost) + ' ' + r.pool;
-  $('r-cost-sub').textContent = t('result.costSub', {
+  $('r-cost-sub').textContent = r.pool + ' · ' + (r.utilization * 100).toFixed(2) + '%';
+
+  // 明细区
+  $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
+  $('r-avg-sub').textContent = t('result.avgFormula', { x: fmtNum(inputs.amount), h: inputs.hour.toFixed(2) });
+
+  $('r-spcx-raw').textContent = fmtNum(r.spcxRaw, 4) + ' / ' + r.userCap;
+  $('r-spcx-raw-sub').textContent = r.cappedByTop
+    ? t('result.spcxCapped', { cap: r.userCap, raw: fmtNum(r.spcxRaw, 4) })
+    : '';
+
+  $('r-refund').textContent = fmtNum(r.refund) + ' ' + r.pool;
+  $('r-refund-sub').textContent = t('result.costSub', {
     lockup: fmtNum(r.lockup),
     refund: fmtNum(r.refund),
     util: (r.utilization * 100).toFixed(2) + '%',
