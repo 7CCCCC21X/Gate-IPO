@@ -649,53 +649,6 @@
   </div>
 </div>
 
-<section class="card">
-  <h2 data-i18n="snapshot.title">当前池子快照</h2>
-
-  <div class="pools-grid">
-    <div class="pool-card" id="poolUsdt">
-      <div class="pool-head">
-        <div class="pool-badge pool-badge-usdt">USDT</div>
-        <div class="pool-weight">70%</div>
-      </div>
-      <div class="pool-stats">
-        <div class="pool-stat">
-          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
-          <div class="pool-value" id="poolUsdtInvest">—</div>
-        </div>
-        <div class="pool-stat">
-          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
-          <div class="pool-value" id="poolUsdtRatio">—</div>
-        </div>
-      </div>
-    </div>
-    <div class="pool-card" id="poolGusd">
-      <div class="pool-head">
-        <div class="pool-badge pool-badge-gusd">GUSD</div>
-        <div class="pool-weight">30%</div>
-      </div>
-      <div class="pool-stats">
-        <div class="pool-stat">
-          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
-          <div class="pool-value" id="poolGusdInvest">—</div>
-        </div>
-        <div class="pool-stat">
-          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
-          <div class="pool-value" id="poolGusdRatio">—</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="progress-wrap">
-    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-meta">
-      <span><span data-i18n="snapshot.windowProgress">认购窗口进度</span> <b id="progressPct">—</b> · <span id="progressTimes">—</span></span>
-      <span><span data-i18n="snapshot.remaining">剩余</span> <b id="progressRemain">—</b></span>
-    </div>
-  </div>
-</section>
-
 <div id="err" class="err-box"></div>
 
 <section id="estimator" class="card">
@@ -854,6 +807,53 @@
   </details>
 </section>
 
+<section class="card">
+  <h2 data-i18n="snapshot.title">当前池子数据</h2>
+
+  <div class="pools-grid">
+    <div class="pool-card" id="poolUsdt">
+      <div class="pool-head">
+        <div class="pool-badge pool-badge-usdt">USDT</div>
+        <div class="pool-weight">70%</div>
+      </div>
+      <div class="pool-stats">
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
+          <div class="pool-value" id="poolUsdtInvest">—</div>
+        </div>
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
+          <div class="pool-value" id="poolUsdtRatio">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="pool-card" id="poolGusd">
+      <div class="pool-head">
+        <div class="pool-badge pool-badge-gusd">GUSD</div>
+        <div class="pool-weight">30%</div>
+      </div>
+      <div class="pool-stats">
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
+          <div class="pool-value" id="poolGusdInvest">—</div>
+        </div>
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
+          <div class="pool-value" id="poolGusdRatio">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-meta">
+      <span><span data-i18n="snapshot.windowProgress">认购窗口进度</span> <b id="progressPct">—</b> · <span id="progressTimes">—</span> <span class="muted">(UTC+8)</span></span>
+      <span><span data-i18n="snapshot.remaining">剩余</span> <b id="progressRemain">—</b></span>
+    </div>
+  </div>
+</section>
+
 <section class="card" id="chartCard">
   <div class="chart-head">
     <div>
@@ -899,7 +899,7 @@ const I18N = {
     'hero.ended': '已结束',
     'hero.price': '成本价',
     'hero.oversub': '综合超募',
-    'snapshot.title': '当前池子快照',
+    'snapshot.title': '当前池子数据',
     'snapshot.poolTotal': '当前总投入',
     'snapshot.poolRatio': '当前认购比',
     'snapshot.windowProgress': '认购窗口进度',
@@ -1004,7 +1004,7 @@ const I18N = {
     'hero.remain': '{h}h {m}m',
     'hero.remainLabel': 'Remaining',
     'hero.ended': 'Ended',
-    'snapshot.title': 'Pool Snapshot',
+    'snapshot.title': 'Pool Data',
     'snapshot.poolTotal': 'Total Invested',
     'snapshot.poolRatio': 'Subscribed Ratio',
     'snapshot.windowProgress': 'Subscription Window Progress',
@@ -1830,9 +1830,13 @@ function renderSnapshotBar() {
   $('progressPct').textContent = timePct.toFixed(2) + '%';
   const fmtShort = (ms) => {
     if (!ms) return '—';
-    const dt = new Date(ms);
-    const m = (n) => String(n).padStart(2, '0');
-    return `${dt.getMonth()+1}/${dt.getDate()} ${m(dt.getHours())}:${m(dt.getMinutes())}`;
+    // 强制按 UTC+8（北京时间）显示，避免用户时区造成混淆
+    const parts = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai', hour12: false,
+      month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    }).formatToParts(new Date(ms));
+    const g = (type) => (parts.find(p => p.type === type) || { value: '' }).value;
+    return `${g('month')}/${g('day')} ${g('hour')}:${g('minute')}`;
   };
   $('progressTimes').textContent = `${fmtShort(startMs)} → ${fmtShort(endMs)}`;
   $('progressRemain').textContent =
