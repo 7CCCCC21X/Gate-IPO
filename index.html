@@ -701,7 +701,7 @@
         <span data-i18n="result.spotPrice">当前预上市价</span>
         <button type="button" id="resetPriceBtn" class="link-btn" data-i18n="result.resetPrice">重置实时价</button>
       </div>
-      <input id="r-price" type="number" step="0.0001" min="0" placeholder="—" />
+      <input id="r-price" type="number" step="0.01" min="0" placeholder="—" />
       <div class="sub" id="r-price-sub">
         <a href="https://web3.binance.com/zh-CN/token/sol/PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh?ref=XIAOCC"
            target="_blank" rel="noopener" class="binance-link">
@@ -1001,6 +1001,18 @@ function setLang(lang) {
   // 触发重渲染（动态文本）
   if (state.api) { renderHero(); renderSnapshotBar(); renderEstimator(); }
 }
+
+// ---------- 数字格式统一 ----------
+// 价格：2 位（SPCX 在几百美元级别）
+const fmtPrice = (n) => fmtNum(n, 2);
+// 数量：4 位
+const fmtQty   = (n) => fmtNum(n, 4);
+// 大额金额：千分位 + 2 位
+const fmtMoney = (n) => fmtNum(n, 2);
+// 百分比：2 位默认
+const fmtPct2  = (n) => (Number(n) || 0).toFixed(2) + '%';
+// 锁仓 ROI 等小数值百分比：3 位
+const fmtPct3  = (n) => (Number(n) || 0).toFixed(3) + '%';
 
 // ---------- 数据源 ----------
 const IPO_UPSTREAM = (pid) =>
@@ -1318,7 +1330,7 @@ function renderEstimator() {
   const priceEl = $('r-price');
   const priceCard = priceEl.closest('.price-card');
   if (!state.priceTouched && livePrice != null) {
-    priceEl.value = livePrice.toFixed(4);
+    priceEl.value = livePrice.toFixed(2);
     priceCard.classList.remove('manual');
   } else if (state.priceTouched) {
     priceCard.classList.add('manual');
@@ -1503,7 +1515,7 @@ function renderChart() {
       </linearGradient>
     </defs>
     ${ticks.map(tk => `<line x1="${pad.l}" x2="${W - pad.r}" y1="${tk.y.toFixed(1)}" y2="${tk.y.toFixed(1)}" stroke="${gridColor}" stroke-width="1"/>
-        <text x="${pad.l - 6}" y="${(tk.y + 3).toFixed(1)}" fill="${axisColor}" font-size="10" text-anchor="end">${tk.v.toFixed(4)}</text>`).join('')}
+        <text x="${pad.l - 6}" y="${(tk.y + 3).toFixed(1)}" fill="${axisColor}" font-size="10" text-anchor="end">${tk.v.toFixed(2)}</text>`).join('')}
     ${refLines}
     <path d="${fill}" fill="url(#g)"/>
     <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8"/>
@@ -1517,13 +1529,13 @@ function renderChart() {
   // 头部元信息
   const delta = last - first;
   const pct = first > 0 ? (delta / first * 100) : 0;
-  $('cPrice').textContent = last.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  $('cPrice').textContent = fmtPrice(last);
   const dEl = $('cDelta');
-  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(4) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
+  dEl.textContent = (delta >= 0 ? '+' : '') + fmtPrice(delta) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
   dEl.className = 'delta ' + (delta >= 0 ? 'up' : 'down');
-  $('cOpen').textContent = data[0].o ? data[0].o.toFixed(4) : data[0].c.toFixed(4);
-  $('cHigh').textContent = Math.max(...hs).toFixed(4);
-  $('cLow').textContent  = Math.min(...ls).toFixed(4);
+  $('cOpen').textContent = fmtPrice(data[0].o || data[0].c);
+  $('cHigh').textContent = fmtPrice(Math.max(...hs));
+  $('cLow').textContent  = fmtPrice(Math.min(...ls));
 
   // 保存几何，供 tooltip 查最近点
   state.chartGeom = { data, W, H, pad, lo, hi, span, first, last };
@@ -1550,7 +1562,7 @@ function renderHero() {
     const first = candles[0].c;
     const delta = last - first;
     const pct = first > 0 ? (delta / first * 100) : 0;
-    tweenNumber($('heroSpot'), last, { decimals: 4, duration: 600 });
+    tweenNumber($('heroSpot'), last, { decimals: 2, duration: 600 });
     const dEl = $('heroDelta');
     dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
     dEl.className = 'delta ' + (Math.abs(delta) < 1e-6 ? 'flat' : (delta >= 0 ? 'up' : 'down'));
@@ -1570,11 +1582,11 @@ function renderSnapshotBar() {
   const mm = Math.floor((remainH - hh) * 60);
 
   if (usdt) {
-    $('poolUsdtInvest').textContent = fmtNum(usdt.invest_amount, 0) + ' USDT';
+    $('poolUsdtInvest').textContent = fmtMoney(usdt.invest_amount) + ' USDT';
     $('poolUsdtRatio').textContent = (+usdt.subscription_ratio).toFixed(2) + 'x';
   }
   if (gusd) {
-    $('poolGusdInvest').textContent = fmtNum(gusd.invest_amount, 0) + ' GUSD';
+    $('poolGusdInvest').textContent = fmtMoney(gusd.invest_amount) + ' GUSD';
     $('poolGusdRatio').textContent = (+gusd.subscription_ratio).toFixed(2) + 'x';
   }
 
@@ -1688,7 +1700,7 @@ $('r-price').addEventListener('input', () => {
 $('resetPriceBtn').addEventListener('click', () => {
   state.priceTouched = false;
   const live = latestClose(state.kline);
-  if (live != null) $('r-price').value = live.toFixed(4);
+  if (live != null) $('r-price').value = live.toFixed(2);
   renderEstimator();
 });
 document.querySelectorAll('input[name="pool"]').forEach(el => {
@@ -1798,9 +1810,9 @@ document.querySelectorAll('.chart-range button').forEach(btn => {
     const vcCls = vsCost >= 0 ? 'pos' : 'neg';
     tip.innerHTML =
       `<div class="tt-time">${time}</div>` +
-      `<div class="tt-price">${c.c.toFixed(4)}</div>` +
-      `<div class="tt-row"><span class="k">${t_('chart.tt.change')}</span><span class="v ${chCls}">${ch >= 0 ? '+' : ''}${ch.toFixed(4)} (${chPct >= 0 ? '+' : ''}${chPct.toFixed(2)}%)</span></div>` +
-      `<div class="tt-row"><span class="k">${t_('chart.tt.vsCost')}</span><span class="v ${vcCls}">${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(2)} (${vsCostPct >= 0 ? '+' : ''}${vsCostPct.toFixed(2)}%)</span></div>` +
+      `<div class="tt-price">${fmtPrice(c.c)}</div>` +
+      `<div class="tt-row"><span class="k">${t_('chart.tt.change')}</span><span class="v ${chCls}">${ch >= 0 ? '+' : ''}${fmtPrice(ch)} (${chPct >= 0 ? '+' : ''}${chPct.toFixed(2)}%)</span></div>` +
+      `<div class="tt-row"><span class="k">${t_('chart.tt.vsCost')}</span><span class="v ${vcCls}">${vsCost >= 0 ? '+' : ''}${fmtPrice(vsCost)} (${vsCostPct >= 0 ? '+' : ''}${vsCostPct.toFixed(2)}%)</span></div>` +
       profitHtml;
     // 定位 tooltip（相对 wrap）
     tip.style.display = 'block';
