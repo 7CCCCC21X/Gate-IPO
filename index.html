@@ -258,6 +258,63 @@
     font-size:11px; font-weight:500; transition:color .15s;
   }
   .binance-link:hover { color:#F0B90B; }
+  /* 对比模式 */
+  .compare-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0 12px;
+  }
+  .compare-card {
+    background:var(--c-card2); border:1.5px solid var(--c-border);
+    border-radius:var(--radius); padding:16px 18px;
+    transition:border-color .2s, box-shadow .2s;
+  }
+  .compare-card.winner {
+    border-color:var(--c-success); box-shadow:0 0 0 3px rgba(5,150,105,0.12);
+    background:linear-gradient(135deg, var(--c-success-bg) 0%, var(--c-card2) 60%);
+  }
+  .compare-card.loser { opacity:0.72; }
+  .compare-head {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+  }
+  .compare-verdict {
+    font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px;
+    background:transparent; color:var(--c-sub);
+  }
+  .compare-card.winner .compare-verdict {
+    background:var(--c-success); color:#fff;
+  }
+  .compare-main { margin-bottom:14px; padding-bottom:12px; border-bottom:1px dashed var(--c-border); }
+  .cmp-main-label { font-size:11px; color:var(--c-sub); margin-bottom:4px; }
+  .cmp-main-value {
+    font-size:22px; font-weight:800; letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums;
+  }
+  .cmp-main-value.pos { color:var(--c-success); }
+  .cmp-main-value.neg { color:var(--c-error); }
+  .compare-rows { display:flex; flex-direction:column; gap:6px; }
+  .cmp-row {
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--c-sub);
+  }
+  .cmp-row b {
+    color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; font-size:12px;
+  }
+  .cmp-row b.negative { color:var(--c-error); }
+  .compare-summary {
+    padding:14px 18px; border-radius:var(--radius); margin:12px 0 10px;
+    font-size:14px; font-weight:600;
+    background:var(--c-primary-light); color:var(--c-primary);
+    border:1.5px solid transparent;
+  }
+  .compare-note {
+    font-size:11px; color:var(--c-sub); padding:10px 14px;
+    background:rgba(245,158,11,0.08); border-left:3px solid var(--c-warn);
+    border-radius:6px; line-height:1.6;
+  }
+  @media (max-width: 640px) {
+    .compare-grid { grid-template-columns:1fr; gap:10px; }
+    .compare-card { padding:14px 16px; }
+    .cmp-main-value { font-size:18px; }
+  }
   /* 明细折叠面板 */
   .detail-panel { margin-top:16px; }
   .detail-panel > summary {
@@ -650,6 +707,7 @@
       <div class="radio-row">
         <label><input type="radio" name="pool" value="USDT" checked> <span data-i18n="estimator.poolUsdt">USDT 池 (70%)</span></label>
         <label><input type="radio" name="pool" value="GUSD"> <span data-i18n="estimator.poolGusd">GUSD 池 (30%)</span></label>
+        <label><input type="radio" name="pool" value="compare"> <span data-i18n="estimator.poolCompare">对比两者</span></label>
       </div>
       <div class="hint" id="poolHint"></div>
     </div>
@@ -683,6 +741,48 @@
     <div class="profit-label" data-i18n="estimator.profitLabel">当前盘前价下的预计盈亏</div>
     <div id="profitValue" class="profit-value">—</div>
     <div id="profitSub" class="profit-sub" data-i18n="common.loading">等待数据加载…</div>
+  </div>
+
+  <div id="compareView" style="display:none">
+    <div class="compare-grid">
+      <div class="compare-card" id="cmpUsdtCard">
+        <div class="compare-head">
+          <span class="pool-badge pool-badge-usdt">USDT</span>
+          <span class="compare-verdict" id="verdictUsdt"></span>
+        </div>
+        <div class="compare-main">
+          <div class="cmp-main-label" data-i18n="compare.netProfit">预计净盈亏</div>
+          <div class="cmp-main-value" id="cmpUsdtProfit">—</div>
+        </div>
+        <div class="compare-rows">
+          <div class="cmp-row"><span data-i18n="compare.getSpcx">预计获得</span><b id="cmpUsdtSpcx">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.actualCost">实际占用</span><b id="cmpUsdtCost">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.refund">预计退款</span><b id="cmpUsdtRefund">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.netRoi">锁仓回报率</span><b id="cmpUsdtRoi">—</b></div>
+        </div>
+      </div>
+      <div class="compare-card" id="cmpGusdCard">
+        <div class="compare-head">
+          <span class="pool-badge pool-badge-gusd">GUSD</span>
+          <span class="compare-verdict" id="verdictGusd"></span>
+        </div>
+        <div class="compare-main">
+          <div class="cmp-main-label" data-i18n="compare.netProfit">预计净盈亏</div>
+          <div class="cmp-main-value" id="cmpGusdProfit">—</div>
+        </div>
+        <div class="compare-rows">
+          <div class="cmp-row"><span data-i18n="compare.getSpcx">预计获得</span><b id="cmpGusdSpcx">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.actualCost">实际占用</span><b id="cmpGusdCost">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.refund">预计退款</span><b id="cmpGusdRefund">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.redeemFee">赎回手续费 0.15%</span><b id="cmpGusdFee" class="negative">—</b></div>
+          <div class="cmp-row"><span data-i18n="compare.netRoi">锁仓回报率</span><b id="cmpGusdRoi">—</b></div>
+        </div>
+      </div>
+    </div>
+    <div class="compare-summary" id="compareSummary"></div>
+    <div class="compare-note" data-i18n="compare.note">
+      ⚠️ GUSD 赎回成 USDT 需 3 天 + 0.15% 手续费（已计入上方净盈亏）。SPCX 本身可直接按市价出售，不额外计费。
+    </div>
   </div>
 
   <div class="result-grid">
@@ -814,6 +914,18 @@ const I18N = {
     'estimator.pool': '选择池子',
     'estimator.poolUsdt': 'USDT 池 (70%)',
     'estimator.poolGusd': 'GUSD 池 (30%)',
+    'estimator.poolCompare': '对比两者',
+    'compare.netProfit': '预计净盈亏',
+    'compare.getSpcx': '预计获得',
+    'compare.actualCost': '实际占用',
+    'compare.refund': '预计退款',
+    'compare.redeemFee': '赎回手续费 0.15%',
+    'compare.netRoi': '锁仓回报率',
+    'compare.note': '⚠️ GUSD 赎回成 USDT 需 3 天 + 0.15% 手续费（已计入上方净盈亏）。SPCX 本身可直接按市价出售，不额外计费。',
+    'compare.verdictBetter': '更划算',
+    'compare.summaryBetter': '🏆 {pool} 池更划算 · 多赚 {delta}（+{pct}）',
+    'compare.summaryTie': '两池收益接近（差异 {delta}），择一即可',
+    'compare.summaryOnly': '只有 {pool} 池可计算',
     'estimator.amount': '投入金额',
     'estimator.amountNote': '（≥ 100）',
     'estimator.amountMin': '最低 100 {coin}',
@@ -907,6 +1019,18 @@ const I18N = {
     'estimator.pool': 'Select Pool',
     'estimator.poolUsdt': 'USDT Pool (70%)',
     'estimator.poolGusd': 'GUSD Pool (30%)',
+    'estimator.poolCompare': 'Compare Both',
+    'compare.netProfit': 'Net P&L',
+    'compare.getSpcx': 'Receive',
+    'compare.actualCost': 'Consumed',
+    'compare.refund': 'Refund',
+    'compare.redeemFee': 'Redemption fee 0.15%',
+    'compare.netRoi': 'Lockup ROI',
+    'compare.note': '⚠️ Redeeming GUSD back to USDT takes 3 days + 0.15% fee (already deducted above). SPCX itself sells at market with no extra fee.',
+    'compare.verdictBetter': 'Better',
+    'compare.summaryBetter': '🏆 {pool} pool wins · +{delta} (+{pct})',
+    'compare.summaryTie': 'Both pools similar (diff {delta}), pick either',
+    'compare.summaryOnly': 'Only {pool} pool data available',
     'estimator.amount': 'Invest Amount',
     'estimator.amountNote': '(≥ 100)',
     'estimator.amountMin': 'Minimum 100 {coin}',
@@ -1238,6 +1362,7 @@ function latestClose(arr) {
 const T_HOURS = 48;
 const POOL_FALLBACK = { USDT: 23730, GUSD: 10170 };
 const USER_CAP_FALLBACK = { USDT: 237.3, GUSD: 101.7 };
+const GUSD_REDEEM_FEE = 0.0015;  // 0.15%
 
 function userAvgFn(X, t, T = T_HOURS) {
   return X * Math.max(0, T - t) / T;
@@ -1324,8 +1449,21 @@ function setHour(v) {
 function renderEstimator() {
   if (!state.api) return;
   const inputs = readInputs();
-  const r = estimate(state.api, inputs);
   const livePrice = latestClose(state.kline);
+
+  // 对比模式
+  const singleModeEls = [document.getElementById('profitCard'), document.querySelector('#estimator .result-grid'), document.querySelector('#estimator .detail-panel')];
+  const cmpEl = document.getElementById('compareView');
+  if (inputs.pool === 'compare') {
+    singleModeEls.forEach(el => { if (el) el.style.display = 'none'; });
+    if (cmpEl) cmpEl.style.display = '';
+    renderCompareView(inputs, livePrice);
+    return;
+  }
+  singleModeEls.forEach(el => { if (el) el.style.display = ''; });
+  if (cmpEl) cmpEl.style.display = 'none';
+
+  const r = estimate(state.api, inputs);
   // 同步实时价到输入框（用户没手动改过时）
   const priceEl = $('r-price');
   const priceCard = priceEl.closest('.price-card');
@@ -1566,6 +1704,98 @@ function renderHero() {
     const dEl = $('heroDelta');
     dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
     dEl.className = 'delta ' + (Math.abs(delta) < 1e-6 ? 'flat' : (delta >= 0 ? 'up' : 'down'));
+  }
+}
+
+function renderCompareView(inputs, livePrice) {
+  // 使用手动价或实时价
+  const manualEl = $('r-price');
+  const manual = parseFloat(manualEl && manualEl.value);
+  const price = state.priceTouched && isFinite(manual) && manual > 0 ? manual : livePrice;
+
+  // 分别估算两池（用同样的金额和时间）
+  const rU = estimate(state.api, { ...inputs, pool: 'USDT', amount: inputs.amount });
+  const rG = estimate(state.api, { ...inputs, pool: 'GUSD', amount: inputs.amount });
+
+  // 盈亏计算
+  function poolPnl(r, isGusd) {
+    if (!(price > 0) || r.spcx <= 0) return null;
+    const revenue = price * r.spcx;
+    const gross = revenue - r.actualCost;
+    // GUSD 额外计入赎回手续费（按 refund 金额 0.15%）
+    const redeemFee = isGusd ? r.refund * GUSD_REDEEM_FEE : 0;
+    const net = gross - redeemFee;
+    const roi = r.lockup > 0 ? (net / r.lockup * 100) : 0;
+    return { revenue, gross, redeemFee, net, roi };
+  }
+  const pU = poolPnl(rU, false);
+  const pG = poolPnl(rG, true);
+
+  // USDT 卡
+  $('cmpUsdtSpcx').textContent = fmtQty(rU.spcx) + ' SPCX';
+  $('cmpUsdtCost').textContent = fmtMoney(rU.actualCost) + ' USDT';
+  $('cmpUsdtRefund').textContent = fmtMoney(rU.refund) + ' USDT';
+  if (pU) {
+    const pEl = $('cmpUsdtProfit');
+    pEl.textContent = (pU.net >= 0 ? '+' : '') + fmtMoney(pU.net) + ' USDT';
+    pEl.className = 'cmp-main-value ' + (pU.net >= 0 ? 'pos' : 'neg');
+    $('cmpUsdtRoi').textContent = (pU.roi >= 0 ? '+' : '') + fmtPct3(pU.roi);
+  } else {
+    $('cmpUsdtProfit').textContent = '—';
+    $('cmpUsdtProfit').className = 'cmp-main-value';
+    $('cmpUsdtRoi').textContent = '—';
+  }
+
+  // GUSD 卡
+  $('cmpGusdSpcx').textContent = fmtQty(rG.spcx) + ' SPCX';
+  $('cmpGusdCost').textContent = fmtMoney(rG.actualCost) + ' GUSD';
+  $('cmpGusdRefund').textContent = fmtMoney(rG.refund) + ' GUSD';
+  $('cmpGusdFee').textContent = pG ? '-' + fmtMoney(pG.redeemFee) + ' USDT' : '—';
+  if (pG) {
+    const pEl = $('cmpGusdProfit');
+    pEl.textContent = (pG.net >= 0 ? '+' : '') + fmtMoney(pG.net) + ' USDT';
+    pEl.className = 'cmp-main-value ' + (pG.net >= 0 ? 'pos' : 'neg');
+    $('cmpGusdRoi').textContent = (pG.roi >= 0 ? '+' : '') + fmtPct3(pG.roi);
+  } else {
+    $('cmpGusdProfit').textContent = '—';
+    $('cmpGusdProfit').className = 'cmp-main-value';
+    $('cmpGusdRoi').textContent = '—';
+  }
+
+  // 胜者判定
+  const uCard = $('cmpUsdtCard');
+  const gCard = $('cmpGusdCard');
+  uCard.classList.remove('winner', 'loser');
+  gCard.classList.remove('winner', 'loser');
+  $('verdictUsdt').textContent = '';
+  $('verdictGusd').textContent = '';
+
+  if (pU && pG) {
+    const diff = pG.net - pU.net;
+    const winnerIsGusd = diff > 0;
+    const winner = winnerIsGusd ? 'GUSD' : 'USDT';
+    const winnerNet = winnerIsGusd ? pG.net : pU.net;
+    const loserNet  = winnerIsGusd ? pU.net : pG.net;
+    const absDiff = Math.abs(diff);
+    const pctDiff = Math.abs(loserNet) > 0.01 ? Math.abs(diff / loserNet * 100) : 0;
+
+    if (absDiff < 0.5) {
+      // 接近持平
+      $('compareSummary').textContent = t('compare.summaryTie', { delta: fmtMoney(absDiff) + ' USDT' });
+    } else {
+      (winnerIsGusd ? gCard : uCard).classList.add('winner');
+      (winnerIsGusd ? uCard : gCard).classList.add('loser');
+      (winnerIsGusd ? $('verdictGusd') : $('verdictUsdt')).textContent = t('compare.verdictBetter');
+      $('compareSummary').textContent = t('compare.summaryBetter', {
+        pool: winner,
+        delta: fmtMoney(absDiff) + ' USDT',
+        pct: pctDiff.toFixed(2) + '%',
+      });
+    }
+  } else if (pU || pG) {
+    $('compareSummary').textContent = t('compare.summaryOnly', { pool: pU ? 'USDT' : 'GUSD' });
+  } else {
+    $('compareSummary').textContent = '—';
   }
 }
 
