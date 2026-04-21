@@ -31,7 +31,7 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
   }
   h1 { font-size: 20px; margin: 0; }
   .status {
@@ -44,6 +44,33 @@
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
   .dot.err { background: var(--err); box-shadow: 0 0 8px var(--err); }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .controls select, .controls input {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+  .controls button {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .controls button:hover { filter: brightness(1.1); }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -103,20 +130,26 @@
   .err-box {
     background: rgba(239, 68, 68, 0.1);
     border: 1px solid var(--err);
-    color: var(--err);
+    color: #fca5a5;
     padding: 10px 14px;
     border-radius: 6px;
     margin-bottom: 16px;
     font-size: 13px;
     display: none;
+    white-space: pre-wrap;
   }
-  .spin {
-    width: 10px; height: 10px; border-radius: 50%;
-    border: 2px solid var(--accent); border-top-color: transparent;
-    animation: spin 0.8s linear infinite;
-    display: inline-block;
+  .log {
+    margin-top: 20px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    max-height: 140px;
+    overflow: auto;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -130,19 +163,61 @@
   </div>
 </header>
 
+<div class="controls">
+  <label>数据源
+    <select id="src">
+      <option value="auto">自动（推荐）</option>
+      <option value="local">本地代理 /api/ipo</option>
+      <option value="corsproxy">corsproxy.io</option>
+      <option value="allorigins">allorigins.win</option>
+      <option value="direct">直连（多半会被 CORS 拦截）</option>
+    </select>
+  </label>
+  <label>刷新
+    <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒
+  </label>
+  <label>项目 ID
+    <input id="pid" type="number" min="1" value="2" style="width:70px" />
+  </label>
+  <button id="apply">应用</button>
+</div>
+
 <div id="err" class="err-box"></div>
 
 <div class="grid" id="overview"></div>
-
 <div class="products" id="products"></div>
-
 <div class="times" id="times"></div>
+<div class="log" id="log"></div>
 
 <script>
-const REFRESH_MS = 10000;
-let prev = {};
-let countdownTimer = null;
-let nextFetchAt = 0;
+const UPSTREAM = (pid) =>
+  `https://www.gate.com/apiw/v2/launch/ipos/project-detail?sub_website_id=0&project_id=${pid}`;
+
+const SOURCES = {
+  local: (pid) => `/api/ipo?project_id=${pid}`,
+  corsproxy: (pid) => `https://corsproxy.io/?` + encodeURIComponent(UPSTREAM(pid)),
+  allorigins: (pid) => `https://api.allorigins.win/raw?url=` + encodeURIComponent(UPSTREAM(pid)),
+  direct: (pid) => UPSTREAM(pid),
+};
+
+let state = {
+  src: 'auto',
+  intervalSec: 10,
+  pid: 2,
+  timer: null,
+  cdTimer: null,
+  nextAt: 0,
+  prev: {},
+  workingSrc: null,
+};
+
+function log(msg, kind) {
+  const el = document.getElementById('log');
+  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const color = kind === 'err' ? '#fca5a5' : kind === 'ok' ? '#86efac' : '#8a92a6';
+  el.innerHTML = `<div style="color:${color}">[${time}] ${msg}</div>` + el.innerHTML;
+  if (el.childNodes.length > 50) el.removeChild(el.lastChild);
+}
 
 function fmtNum(n, digits = 2) {
   const x = Number(n);
@@ -164,12 +239,10 @@ function fmtUSD(n) {
 }
 function fmtTime(ts) {
   if (!ts) return '-';
-  const d = new Date(ts * 1000);
-  return d.toLocaleString('zh-CN', { hour12: false });
+  return new Date(ts * 1000).toLocaleString('zh-CN', { hour12: false });
 }
-function statusText(front, distribute) {
-  const s = { 1: '预热中', 2: '认购中', 3: '认购结束', 4: '已分发' };
-  return s[front] || '未知';
+function statusText(front) {
+  return ({ 1: '预热中', 2: '认购中', 3: '认购结束', 4: '已分发' })[front] || '未知';
 }
 
 function renderCard(parent, id, label, value, sub, animate) {
@@ -194,26 +267,31 @@ function renderCard(parent, id, label, value, sub, animate) {
   el.querySelector('.sub').textContent = sub || '';
 }
 
-function render(data) {
-  const d = data.data;
+function render(json) {
+  const d = json.data;
   document.getElementById('coin').textContent = d.coin || '';
 
   const overview = document.getElementById('overview');
   renderCard(overview, 'c-status', '状态', statusText(d.front_status), `project_id=${d.id}`, false);
   renderCard(overview, 'c-valuation', '隐含估值', fmtUSD(d.implied_valuation), `总份额 ${fmtInt(d.total_shares)}`, false);
-  renderCard(overview, 'c-overall', '综合进度', (+d.combined_progress_rate).toFixed(4) + '%',
-    `认购比 ${(+d.subscription_ratio).toFixed(4)}`, prev.combined_progress_rate !== d.combined_progress_rate);
-  prev.combined_progress_rate = d.combined_progress_rate;
+  renderCard(
+    overview,
+    'c-overall',
+    '综合进度',
+    (+d.combined_progress_rate).toFixed(4) + '%',
+    `认购比 ${(+d.subscription_ratio).toFixed(4)}`,
+    state.prev.combined_progress_rate !== d.combined_progress_rate
+  );
+  state.prev.combined_progress_rate = d.combined_progress_rate;
 
   const productsEl = document.getElementById('products');
   productsEl.innerHTML = '';
   (d.products || []).forEach((p) => {
-    const prevP = prev['p' + p.id] || {};
-    const changed = (k) => prevP[k] !== p[k];
-
+    const prevP = state.prev['p' + p.id] || {};
+    const changed = (k) => prevP[k] !== undefined && prevP[k] !== p[k];
+    const rate = Math.min(100, Number(p.progress_rate) || 0);
     const card = document.createElement('div');
     card.className = 'product';
-    const rate = Math.min(100, Number(p.progress_rate) || 0);
     card.innerHTML = `
       <h2><span>${p.coin} 池</span><span>${(+p.progress_rate).toFixed(4)}%</span></h2>
       <div class="bar"><div style="width:${rate}%"></div></div>
@@ -228,12 +306,10 @@ function render(data) {
       <div class="row"><span class="k">最低认购</span><span class="v">${p.subscribe_min} ${p.coin}</span></div>
     `;
     productsEl.appendChild(card);
-
-    prev['p' + p.id] = { ...p };
+    state.prev['p' + p.id] = { ...p };
   });
 
-  const timesEl = document.getElementById('times');
-  timesEl.innerHTML = `
+  document.getElementById('times').innerHTML = `
     <div class="row"><span class="k">预热时间</span><span class="v">${fmtTime(d.warm_up_time)}</span></div>
     <div class="row"><span class="k">开始认购</span><span class="v">${fmtTime(d.start_time)}</span></div>
     <div class="row"><span class="k">结束认购</span><span class="v">${fmtTime(d.end_time)}</span></div>
@@ -244,50 +320,112 @@ function render(data) {
 }
 
 function setStatus(kind, msg) {
-  document.getElementById('dot').className = 'dot ' + kind;
+  document.getElementById('dot').className = 'dot ' + (kind || '');
   document.getElementById('statusText').textContent = msg;
 }
 
 function showError(msg) {
   const el = document.getElementById('err');
-  if (msg) {
-    el.textContent = msg;
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else el.style.display = 'none';
+}
+
+async function tryFetch(sourceKey) {
+  const url = SOURCES[sourceKey](state.pid) + (SOURCES[sourceKey](state.pid).includes('?') ? '&' : '?') + '_t=' + Date.now();
+  const r = await fetch(url, { cache: 'no-store' });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const text = await r.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch { throw new Error('返回非 JSON：' + text.slice(0, 80)); }
+  if (json.code !== 200) throw new Error(json.message || `code=${json.code}`);
+  if (!json.data) throw new Error('缺少 data 字段');
+  return json;
 }
 
 async function fetchOnce() {
   setStatus('', '加载中…');
-  try {
-    const r = await fetch('/api/ipo?t=' + Date.now());
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const json = await r.json();
-    if (json.code !== 200) throw new Error(json.message || '上游返回错误');
-    render(json);
-    showError('');
-    setStatus('ok', '已更新于 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
-  } catch (e) {
-    showError('请求失败：' + e.message);
-    setStatus('err', '请求失败');
+
+  const order =
+    state.src === 'auto'
+      ? (state.workingSrc
+          ? [state.workingSrc, 'corsproxy', 'allorigins', 'local', 'direct']
+          : (location.protocol === 'file:'
+              ? ['corsproxy', 'allorigins', 'direct']
+              : ['local', 'corsproxy', 'allorigins', 'direct']))
+      : [state.src];
+
+  const seen = new Set();
+  const errs = [];
+  for (const key of order) {
+    if (seen.has(key)) continue;
+    seen.add(key);
+    try {
+      const json = await tryFetch(key);
+      render(json);
+      showError('');
+      state.workingSrc = key;
+      setStatus('ok', `已更新 · 数据源 ${key} · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
+      log(`✓ ${key} 成功`, 'ok');
+      return;
+    } catch (e) {
+      const msg = `${key} 失败：${e.message}`;
+      errs.push(msg);
+      log('✗ ' + msg, 'err');
+      if (key === state.workingSrc) state.workingSrc = null;
+    }
   }
+  showError('所有数据源均失败：\n' + errs.join('\n'));
+  setStatus('err', '请求失败');
 }
 
 function startLoop() {
+  if (state.timer) clearInterval(state.timer);
+  if (state.cdTimer) clearInterval(state.cdTimer);
   fetchOnce();
-  nextFetchAt = Date.now() + REFRESH_MS;
-  setInterval(() => {
+  state.nextAt = Date.now() + state.intervalSec * 1000;
+  state.timer = setInterval(() => {
     fetchOnce();
-    nextFetchAt = Date.now() + REFRESH_MS;
-  }, REFRESH_MS);
-
-  countdownTimer = setInterval(() => {
-    const s = Math.max(0, Math.round((nextFetchAt - Date.now()) / 1000));
-    document.getElementById('countdown').textContent = '· 下一次 ' + s + 's';
+    state.nextAt = Date.now() + state.intervalSec * 1000;
+  }, state.intervalSec * 1000);
+  state.cdTimer = setInterval(() => {
+    const s = Math.max(0, Math.round((state.nextAt - Date.now()) / 1000));
+    document.getElementById('countdown').textContent = ' · 下一次 ' + s + 's';
   }, 200);
 }
 
+function persist() {
+  try {
+    localStorage.setItem(
+      'gate-ipo-cfg',
+      JSON.stringify({ src: state.src, intervalSec: state.intervalSec, pid: state.pid })
+    );
+  } catch {}
+}
+
+function restore() {
+  try {
+    const s = JSON.parse(localStorage.getItem('gate-ipo-cfg') || '{}');
+    if (s.src) state.src = s.src;
+    if (s.intervalSec) state.intervalSec = s.intervalSec;
+    if (s.pid) state.pid = s.pid;
+  } catch {}
+  document.getElementById('src').value = state.src;
+  document.getElementById('interval').value = state.intervalSec;
+  document.getElementById('pid').value = state.pid;
+}
+
+document.getElementById('apply').addEventListener('click', () => {
+  state.src = document.getElementById('src').value;
+  state.intervalSec = Math.max(2, Number(document.getElementById('interval').value) || 10);
+  state.pid = Math.max(1, Number(document.getElementById('pid').value) || 2);
+  state.workingSrc = null;
+  state.prev = {};
+  persist();
+  startLoop();
+});
+
+restore();
 startLoop();
 </script>
 </body>
