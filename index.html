@@ -359,6 +359,36 @@
   }
   .binance-link:hover { color:#F0B90B; }
   /* 对比模式 */
+  .compare-controls {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));
+    gap:10px; margin:16px 0 4px; padding:12px 14px;
+    background:var(--c-card2); border:1px dashed var(--c-border);
+    border-radius:var(--radius);
+  }
+  .cmp-ctrl label {
+    display:flex; align-items:center; gap:6px; font-size:11px;
+    color:var(--c-sub); font-weight:600; margin-bottom:6px;
+  }
+  .cmp-ctrl .pool-tag-usdt, .cmp-ctrl .pool-tag-gusd {
+    font-size:10px; padding:1px 6px; border-radius:4px; color:#fff; font-weight:800;
+  }
+  .cmp-ctrl .pool-tag-usdt { background:linear-gradient(135deg, #22c55e, #16a34a); }
+  .cmp-ctrl .pool-tag-gusd { background:linear-gradient(135deg, #0066ff, #38bdf8); }
+  .cmp-ctrl-input {
+    position:relative; display:block;
+  }
+  .cmp-ctrl-input input {
+    width:100%; background:var(--c-card); color:var(--c-text);
+    border:1.5px solid var(--c-border); border-radius:var(--radius-sm);
+    padding:8px 50px 8px 12px; font-size:14px; font-weight:700;
+    outline:none; transition:border-color .15s, box-shadow .15s;
+    font-variant-numeric:tabular-nums;
+  }
+  .cmp-ctrl-input input:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px var(--c-primary-light); }
+  .cmp-ctrl-input .cmp-unit {
+    position:absolute; right:12px; top:50%; transform:translateY(-50%);
+    font-size:12px; color:var(--c-sub); font-weight:600; pointer-events:none;
+  }
   .compare-grid {
     display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0 12px;
   }
@@ -918,6 +948,29 @@
   </div>
 
   <div id="compareView" style="display:none">
+    <div class="compare-controls">
+      <div class="cmp-ctrl">
+        <label data-i18n="compare.price">预上市价</label>
+        <div class="cmp-ctrl-input">
+          <input id="cmpPrice" type="number" step="0.01" min="0" placeholder="—" />
+          <span class="cmp-unit">USDT</span>
+        </div>
+      </div>
+      <div class="cmp-ctrl">
+        <label><span class="pool-tag-usdt">USDT</span> <span data-i18n="compare.finalPool">池最终总投入</span></label>
+        <div class="cmp-ctrl-input">
+          <input id="cmpFinalUsdt" type="number" step="1000" min="0" placeholder="—" />
+          <span class="cmp-unit">USDT</span>
+        </div>
+      </div>
+      <div class="cmp-ctrl">
+        <label><span class="pool-tag-gusd">GUSD</span> <span data-i18n="compare.finalPool">池最终总投入</span></label>
+        <div class="cmp-ctrl-input">
+          <input id="cmpFinalGusd" type="number" step="1000" min="0" placeholder="—" />
+          <span class="cmp-unit">GUSD</span>
+        </div>
+      </div>
+    </div>
     <div class="compare-grid">
       <div class="compare-card" id="cmpUsdtCard">
         <div class="compare-head">
@@ -1180,6 +1233,8 @@ const I18N = {
     'compare.redeemFee': '赎回手续费 0.15%',
     'compare.netRoi': '锁仓回报率',
     'compare.note': '⚠️ GUSD 赎回成 USDT 需 3 天 + 0.15% 手续费（已计入上方净盈亏）。SPCX 本身可直接按市价出售，不额外计费。',
+    'compare.price': '预上市价',
+    'compare.finalPool': '池最终总投入',
     'compare.verdictBetter': '更划算',
     'compare.summaryBetter': '🏆 {pool} 池更划算 · 多赚 {delta}（+{pct}）',
     'compare.summaryTie': '两池收益接近（差异 {delta}），择一即可',
@@ -1296,6 +1351,8 @@ const I18N = {
     'compare.redeemFee': 'Redemption fee 0.15%',
     'compare.netRoi': 'Lockup ROI',
     'compare.note': '⚠️ Redeeming GUSD back to USDT takes 3 days + 0.15% fee (already deducted above). SPCX itself sells at market with no extra fee.',
+    'compare.price': 'Pre-market price',
+    'compare.finalPool': 'pool final total',
     'compare.verdictBetter': 'Better',
     'compare.summaryBetter': '🏆 {pool} pool wins · +{delta} (+{pct})',
     'compare.summaryTie': 'Both pools similar (diff {delta}), pick either',
@@ -1448,6 +1505,9 @@ const state = {
   hourInitialized: false,
   priceTouched: false,  // 用户是否手动改过价格
   finalInvestTouched: false,  // 用户是否手动改过"假设最终池子总投入"
+  cmpPriceTouched: false,
+  cmpUsdtTouched: false,
+  cmpGusdTouched: false,
   timer: null,
   cdTimer: null,
   nextAt: 0,
@@ -2030,15 +2090,34 @@ function renderHero() {
 }
 
 function renderCompareView(inputs, livePrice) {
-  // 使用手动价或实时价
-  const manualEl = $('r-price');
-  const manual = parseFloat(manualEl && manualEl.value);
-  const price = state.priceTouched && isFinite(manual) && manual > 0 ? manual : livePrice;
+  // 对比模式独立的控件：价格 + 两池各自的最终投入
+  const products = (state.api && state.api.data && state.api.data.products) || [];
+  const usdtP = products.find(x => x.coin === 'USDT');
+  const gusdP = products.find(x => x.coin === 'GUSD');
 
-  // 分别估算两池（用同样的金额和时间）
-  // 自定义"池子最终总投入"只对 USDT 路径生效（GUSD 池规模不同，沿用实时值）
-  const rU = estimate(state.api, { ...inputs, pool: 'USDT' });
-  const rG = estimate(state.api, { ...inputs, pool: 'GUSD', finalInvestOverride: null });
+  const priceEl = $('cmpPrice');
+  if (!state.cmpPriceTouched && livePrice != null) priceEl.value = livePrice.toFixed(2);
+  const manualPrice = parseFloat(priceEl.value);
+  const price = state.cmpPriceTouched && isFinite(manualPrice) && manualPrice > 0 ? manualPrice : livePrice;
+
+  const uEl = $('cmpFinalUsdt');
+  const gEl = $('cmpFinalGusd');
+  uEl.placeholder = usdtP ? fmtNum(usdtP.invest_amount, 0) : '—';
+  gEl.placeholder = gusdP ? fmtNum(gusdP.invest_amount, 0) : '—';
+  if (!state.cmpUsdtTouched) uEl.value = '';
+  if (!state.cmpGusdTouched) gEl.value = '';
+  const uOverride = state.cmpUsdtTouched ? parseFloat(uEl.value) : NaN;
+  const gOverride = state.cmpGusdTouched ? parseFloat(gEl.value) : NaN;
+
+  // 分别估算两池
+  const rU = estimate(state.api, {
+    ...inputs, pool: 'USDT',
+    finalInvestOverride: isFinite(uOverride) && uOverride > 0 ? uOverride : null,
+  });
+  const rG = estimate(state.api, {
+    ...inputs, pool: 'GUSD',
+    finalInvestOverride: isFinite(gOverride) && gOverride > 0 ? gOverride : null,
+  });
 
   // 盈亏计算
   function poolPnl(r, isGusd) {
@@ -2296,6 +2375,21 @@ $('resetFinalBtn').addEventListener('click', () => {
   state.finalInvestTouched = false;
   $('finalInvest').value = '';
   renderEstimator();
+});
+
+// 对比模式输入
+$('cmpPrice').addEventListener('input', () => { state.cmpPriceTouched = true; renderEstimator(); });
+$('cmpFinalUsdt').addEventListener('input', () => { state.cmpUsdtTouched = true; renderEstimator(); });
+$('cmpFinalGusd').addEventListener('input', () => { state.cmpGusdTouched = true; renderEstimator(); });
+// 切回对比模式时重置触碰标志，从而在同步 placeholder 时清空输入框
+document.querySelectorAll('input[name="pool"]').forEach(el => {
+  el.addEventListener('change', () => {
+    if (el.value === 'compare') {
+      state.cmpPriceTouched = false;
+      state.cmpUsdtTouched = false;
+      state.cmpGusdTouched = false;
+    }
+  });
 });
 
 document.querySelectorAll('.quick-btns-small button').forEach(btn => {
