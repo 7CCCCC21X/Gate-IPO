@@ -258,6 +258,38 @@
   .result-grid .card .value { font-size:18px; font-weight:800; letter-spacing:-.3px; color:var(--c-text); }
   .result-grid .card .value.green { color:var(--c-success); }
   .result-grid .card .value.red { color:var(--c-error); }
+  /* 结果三联卡：等高 + 色标 + 字号统一 */
+  .result-trio { align-items:stretch; }
+  .result-card { display:flex; flex-direction:column; padding:16px 18px; position:relative; }
+  .result-card::before {
+    content:''; position:absolute; left:0; top:0; bottom:0; width:3px;
+    border-radius:var(--radius) 0 0 var(--radius);
+  }
+  .result-card-spcx::before  { background:#0066ff; }
+  .result-card-cost::before  { background:#f59e0b; }
+  .result-card-price::before { background:#22c55e; }
+  .result-head {
+    display:flex; align-items:center; gap:8px; margin-bottom:10px;
+    justify-content:space-between; flex-wrap:wrap;
+  }
+  .result-head .result-title {
+    font-size:11px; color:var(--c-sub); font-weight:600;
+    text-transform:uppercase; letter-spacing:.5px; flex:1; min-width:0;
+  }
+  .result-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .result-card-spcx  .result-dot { background:#0066ff; box-shadow:0 0 8px rgba(0,102,255,0.5); }
+  .result-card-cost  .result-dot { background:#f59e0b; box-shadow:0 0 8px rgba(245,158,11,0.5); }
+  .result-card-price .result-dot { background:#22c55e; box-shadow:0 0 8px rgba(34,197,94,0.5); }
+  .result-card .result-value {
+    font-size:24px; font-weight:800; letter-spacing:-.4px;
+    color:var(--c-text); font-variant-numeric:tabular-nums; line-height:1.1;
+  }
+  .result-card .result-sub {
+    font-size:11px; color:var(--c-sub); margin-top:6px; line-height:1.4;
+  }
+  @media (max-width: 640px) {
+    .result-card .result-value { font-size:20px; }
+  }
   /* 成本卡明细 */
   .cost-card .cost-rows {
     margin-top:10px; padding-top:10px; border-top:1px dashed var(--c-border);
@@ -447,25 +479,38 @@
     display:grid; grid-template-columns:1fr 1fr; gap:12px;
   }
   .pool-card {
-    background:var(--c-card2); border:1.5px solid var(--c-border);
-    border-radius:var(--radius); padding:16px 18px;
-    transition:border-color .15s, transform .15s;
+    border:1.5px solid var(--c-border); border-radius:var(--radius);
+    padding:16px 18px; position:relative; overflow:hidden;
+    transition:border-color .15s, transform .15s, box-shadow .15s;
   }
-  .pool-card:hover { border-color:var(--c-primary); transform:translateY(-1px); }
+  .pool-card::before {
+    content:''; position:absolute; left:0; top:0; right:0; height:3px;
+  }
+  #poolUsdt {
+    background:linear-gradient(135deg, rgba(34,197,94,0.08) 0%, var(--c-card2) 60%);
+    border-color:rgba(34,197,94,0.25);
+  }
+  #poolUsdt::before { background:linear-gradient(90deg, #22c55e, #16a34a); }
+  #poolUsdt:hover { border-color:#22c55e; box-shadow:0 4px 14px rgba(34,197,94,0.12); }
+  #poolGusd {
+    background:linear-gradient(135deg, rgba(0,102,255,0.08) 0%, var(--c-card2) 60%);
+    border-color:rgba(0,102,255,0.25);
+  }
+  #poolGusd::before { background:linear-gradient(90deg, #0066ff, #38bdf8); }
+  #poolGusd:hover { border-color:var(--c-primary); box-shadow:0 4px 14px rgba(0,102,255,0.12); }
   .pool-head {
     display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
   }
   .pool-badge {
-    font-size:13px; font-weight:800; padding:4px 12px; border-radius:8px;
-    letter-spacing:.3px;
+    font-size:13px; font-weight:800; padding:5px 14px; border-radius:8px;
+    letter-spacing:.3px; color:#fff;
   }
-  .pool-badge-usdt { background:#22c55e22; color:#16a34a; }
-  .pool-badge-gusd { background:#4f8cff22; color:var(--c-primary); }
-  [data-theme="dark"] .pool-badge-usdt,
-  @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) .pool-badge-usdt { background:rgba(52,211,153,.15); color:#34d399; } }
+  .pool-badge-usdt { background:linear-gradient(135deg, #22c55e, #16a34a); }
+  .pool-badge-gusd { background:linear-gradient(135deg, #0066ff, #38bdf8); }
   .pool-weight {
-    font-size:11px; color:var(--c-sub); padding:2px 8px;
+    font-size:11px; color:var(--c-sub); padding:2px 10px;
     background:var(--c-card); border-radius:999px; font-weight:600;
+    border:1px solid var(--c-border);
   }
   .pool-stats {
     display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;
@@ -481,6 +526,36 @@
     .pools-grid { grid-template-columns:1fr; gap:10px; }
     .pool-card { padding:14px 16px; }
     .pool-value { font-size:14px; }
+  }
+  /* 池子拥挤度对比条 */
+  .pool-compare-bar { margin-bottom:16px; }
+  .pcb-label {
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:12px; color:var(--c-sub); margin-bottom:8px; font-weight:600;
+  }
+  .pcb-label .pcb-hint { font-size:10px; font-weight:400; opacity:0.7; }
+  .pcb-track {
+    display:flex; height:32px; border-radius:8px; overflow:hidden;
+    background:var(--c-card2); border:1px solid var(--c-border);
+  }
+  .pcb-seg {
+    height:100%; display:flex; align-items:center; padding:0 10px;
+    gap:6px; min-width:60px;
+    transition:flex .5s ease;
+    font-size:12px; font-weight:700; color:#fff;
+    white-space:nowrap; overflow:hidden;
+  }
+  .pcb-seg-usdt { background:linear-gradient(90deg, #16a34a, #22c55e); }
+  .pcb-seg-gusd { background:linear-gradient(90deg, #0066ff, #38bdf8); }
+  .pcb-seg .pcb-badge {
+    background:rgba(255,255,255,0.25); padding:2px 8px; border-radius:4px;
+    font-size:10px; font-weight:800;
+  }
+  .pcb-seg .pcb-val { font-variant-numeric:tabular-nums; }
+  .pcb-verdict {
+    margin-top:8px; font-size:12px; color:var(--c-text);
+    padding:8px 12px; background:var(--c-primary-light); border-radius:6px;
+    border-left:3px solid var(--c-primary); font-weight:500;
   }
   /* 综合进度条 */
   .progress-wrap { margin-top:14px; }
@@ -845,25 +920,36 @@
     </div>
   </div>
 
-  <div class="result-grid">
-    <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
-    <div class="card cost-card">
-      <div class="label" data-i18n="result.cost">实际占用资金</div>
-      <div id="r-cost" class="value">—</div>
+  <div class="result-grid result-trio">
+    <div class="card result-card result-card-spcx">
+      <div class="result-head">
+        <span class="result-dot"></span>
+        <span class="result-title" data-i18n="result.spcx">预计获得 SPCX</span>
+      </div>
+      <div id="r-spcx" class="result-value">—</div>
+      <div id="r-spcx-sub" class="result-sub"></div>
+    </div>
+    <div class="card cost-card result-card result-card-cost">
+      <div class="result-head">
+        <span class="result-dot"></span>
+        <span class="result-title" data-i18n="result.cost">实际占用资金</span>
+      </div>
+      <div id="r-cost" class="result-value">—</div>
       <div class="cost-rows">
         <div class="cost-row"><span data-i18n="result.costLockup">锁仓金额</span><b id="r-cost-lockup">—</b></div>
         <div class="cost-row"><span data-i18n="result.costRefund">预计退款</span><b id="r-cost-refund">—</b></div>
         <div class="cost-row"><span data-i18n="result.costUtil">资金利用率</span><b id="r-cost-util">—</b></div>
       </div>
     </div>
-    <div class="card price-card">
-      <div class="label" style="display:flex;justify-content:space-between;align-items:center">
-        <span data-i18n="result.spotPrice">当前预上市价</span>
+    <div class="card price-card result-card result-card-price">
+      <div class="result-head">
+        <span class="result-dot"></span>
+        <span class="result-title" data-i18n="result.spotPrice">当前预上市价</span>
         <button type="button" id="resetPriceBtn" class="link-btn" data-i18n="result.resetPrice">重置实时价</button>
       </div>
       <input id="r-price" type="number" step="0.01" min="0" placeholder="—" />
       <div class="price-hint" data-i18n="result.priceHint">💡 可手动修改，模拟不同退出价格的盈亏</div>
-      <div class="sub" id="r-price-sub">
+      <div class="result-sub" id="r-price-sub">
         <a href="https://web3.binance.com/zh-CN/token/sol/PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh?ref=XIAOCC"
            target="_blank" rel="noopener" class="binance-link">
           <svg viewBox="0 0 32 32" width="13" height="13" style="vertical-align:-2px;margin-right:4px"><path fill="#F0B90B" d="M9.207 13.95l6.79-6.79 6.794 6.793 3.95-3.95L15.997 3.26 5.257 14l3.95-3.95zM3.26 15.997l3.95-3.95 3.95 3.95-3.95 3.95zm5.947 2.05l6.79 6.793 6.794-6.793 3.952 3.948-.002.002-10.744 10.745-10.74-10.738-.005-.006zm15.74-2.05l3.95-3.95 3.95 3.95-3.95 3.95zM20.005 15.997h-.002L15.997 12l-2.962 2.962-.34.34-.703.704-.005.005.005.005 4.005 4.004 4.008-4.008.002-.002z"/></svg>
@@ -919,6 +1005,24 @@
 
 <section class="card">
   <h2 data-i18n="snapshot.title">当前池子数据</h2>
+
+  <div class="pool-compare-bar">
+    <div class="pcb-label">
+      <span data-i18n="snapshot.crowdCompare">池子拥挤度对比</span>
+      <span class="pcb-hint" data-i18n="snapshot.crowdHint">(认购倍数越低越有利)</span>
+    </div>
+    <div class="pcb-track">
+      <div class="pcb-seg pcb-seg-usdt" id="pcbUsdtSeg">
+        <span class="pcb-badge">USDT</span>
+        <span class="pcb-val" id="pcbUsdtVal">—</span>
+      </div>
+      <div class="pcb-seg pcb-seg-gusd" id="pcbGusdSeg">
+        <span class="pcb-badge">GUSD</span>
+        <span class="pcb-val" id="pcbGusdVal">—</span>
+      </div>
+    </div>
+    <div class="pcb-verdict" id="pcbVerdict"></div>
+  </div>
 
   <div class="pools-grid">
     <div class="pool-card" id="poolUsdt">
@@ -1013,6 +1117,10 @@ const I18N = {
     'snapshot.title': '当前池子数据',
     'snapshot.poolTotal': '当前总投入',
     'snapshot.poolRatio': '当前认购比',
+    'snapshot.crowdCompare': '池子拥挤度对比',
+    'snapshot.crowdHint': '(认购倍数越低越有利)',
+    'snapshot.crowdVerdict': '🎯 {pool} 池更有优势 · 认购倍数低 {delta}%',
+    'snapshot.crowdTie': '两池拥挤度接近',
     'snapshot.windowProgress': '认购窗口进度',
     'snapshot.remaining': '剩余',
     'snapshot.endedShort': '已结束',
@@ -1123,6 +1231,10 @@ const I18N = {
     'snapshot.title': 'Pool Data',
     'snapshot.poolTotal': 'Total Invested',
     'snapshot.poolRatio': 'Subscribed Ratio',
+    'snapshot.crowdCompare': 'Pool Crowding Comparison',
+    'snapshot.crowdHint': '(lower ratio = more favorable)',
+    'snapshot.crowdVerdict': '🎯 {pool} pool more favorable · {delta}% less crowded',
+    'snapshot.crowdTie': 'Both pools similarly crowded',
     'snapshot.windowProgress': 'Subscription Window Progress',
     'snapshot.remaining': 'Remaining',
     'snapshot.endedShort': 'Ended',
@@ -1986,6 +2098,33 @@ function renderSnapshotBar() {
   if (gusd) {
     $('poolGusdInvest').textContent = fmtMoney(gusd.invest_amount) + ' GUSD';
     $('poolGusdRatio').textContent = (+gusd.subscription_ratio).toFixed(2) + 'x';
+  }
+
+  // 拥挤度对比条：比例基于 subscription_ratio 的倒数（倍数越低越有利）
+  if (usdt && gusd) {
+    const uRatio = +usdt.subscription_ratio || 0;
+    const gRatio = +gusd.subscription_ratio || 0;
+    // 用倒数（更有利的比例条更长）
+    const uAdv = uRatio > 0 ? 1 / uRatio : 0;
+    const gAdv = gRatio > 0 ? 1 / gRatio : 0;
+    const totalAdv = uAdv + gAdv;
+    const uPct = totalAdv > 0 ? (uAdv / totalAdv * 100) : 50;
+    const gPct = 100 - uPct;
+    $('pcbUsdtSeg').style.flex = uPct;
+    $('pcbGusdSeg').style.flex = gPct;
+    $('pcbUsdtVal').textContent = uRatio.toFixed(2) + 'x';
+    $('pcbGusdVal').textContent = gRatio.toFixed(2) + 'x';
+    // 判定
+    const vEl = $('pcbVerdict');
+    if (Math.abs(uRatio - gRatio) / Math.max(uRatio, gRatio) < 0.05) {
+      vEl.textContent = t('snapshot.crowdTie');
+    } else if (uRatio < gRatio) {
+      const delta = ((gRatio - uRatio) / gRatio * 100).toFixed(1);
+      vEl.textContent = t('snapshot.crowdVerdict', { pool: 'USDT', delta });
+    } else {
+      const delta = ((uRatio - gRatio) / uRatio * 100).toFixed(1);
+      vEl.textContent = t('snapshot.crowdVerdict', { pool: 'GUSD', delta });
+    }
   }
 
   // 时间进度条
