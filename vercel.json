@@ -4,6 +4,9 @@
   "functions": {
     "api/ipo.js": {
       "maxDuration": 15
+    },
+    "api/kline.js": {
+      "maxDuration": 15
     }
   }
 }

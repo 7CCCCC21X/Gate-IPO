@@ -3,159 +3,95 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Gate IPO 实时数据 - SPCX</title>
+<title>Gate SpaceX 收益预估 · SPCX</title>
 <style>
   :root {
-    --bg: #0b0e14;
-    --panel: #151923;
-    --panel-2: #1d2230;
-    --border: #262b3a;
-    --text: #e6e9ef;
-    --muted: #8a92a6;
-    --accent: #4f8cff;
-    --ok: #22c55e;
-    --warn: #f59e0b;
-    --err: #ef4444;
+    --bg: #0b0e14; --panel: #151923; --panel-2: #1d2230;
+    --border: #262b3a; --text: #e6e9ef; --muted: #8a92a6;
+    --accent: #4f8cff; --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
   }
   * { box-sizing: border-box; }
   body {
-    margin: 0;
+    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 24px;
   }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  h1 { font-size: 20px; margin: 0; }
-  .status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
-  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
-  .dot.err { background: var(--err); box-shadow: 0 0 8px var(--err); }
-  .controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 20px;
-    font-size: 13px;
-    color: var(--muted);
-  }
+  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
+  h1 { font-size:20px; margin:0; }
+  h2 { font-size:16px; margin:0 0 14px; }
+  h3 { font-size:14px; margin:20px 0 10px; color:var(--muted); font-weight:600; }
+  .status { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+  .dot.ok { background:var(--ok); box-shadow:0 0 8px var(--ok); }
+  .dot.err { background:var(--err); box-shadow:0 0 8px var(--err); }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; font-size:13px; color:var(--muted); }
   .controls select, .controls input {
-    background: var(--panel);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 10px;
-    font-size: 13px;
+    background:var(--panel); color:var(--text); border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; font-size:13px;
   }
-  .controls button {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    padding: 6px 14px;
-    font-size: 13px;
-    cursor: pointer;
+  .controls button, .quick-btns button {
+    background:var(--accent); color:#fff; border:none; border-radius:6px;
+    padding:6px 14px; font-size:13px; cursor:pointer;
   }
-  .controls button:hover { filter: brightness(1.1); }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 12px;
-    margin-bottom: 20px;
+  .controls button:hover, .quick-btns button:hover { filter:brightness(1.1); }
+  .quick-btns { display:flex; gap:6px; margin-top:6px; }
+  .quick-btns button { background:var(--panel-2); color:var(--text); border:1px solid var(--border); padding:4px 10px; font-size:12px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
+  .card .label { color:var(--muted); font-size:12px; margin-bottom:6px; }
+  .card .value { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .card .sub { color:var(--muted); font-size:12px; margin-top:4px; }
+  .form-grid, .result-grid {
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;
   }
-  .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
+  .form-grid { margin-bottom:18px; }
+  .field label.ttl { display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+  .field input[type="number"], .field input[type="range"] {
+    width:100%; background:var(--panel-2); color:var(--text);
+    border:1px solid var(--border); border-radius:6px; padding:8px 10px;
+    font-size:14px; font-variant-numeric:tabular-nums;
   }
-  .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
-  .card .value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .card .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 20px; }
-  .product {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
+  .field input.invalid { border-color:var(--err); }
+  .field .hint { font-size:11px; color:var(--muted); margin-top:4px; min-height:14px; }
+  .field .hint.err { color:var(--err); }
+  .radio-row label { display:inline-flex; align-items:center; gap:6px; margin-right:16px; font-size:14px; cursor:pointer; }
+  .radio-row input { accent-color:var(--accent); }
+  .result-grid .card { margin-bottom:0; padding:14px; background:var(--panel-2); }
+  .result-grid .card .value.green { color:var(--ok); }
+  .result-grid .card .value.red { color:var(--err); }
+  table.pnl {
+    width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:6px; overflow:hidden;
   }
-  .product h2 { margin: 0 0 12px; font-size: 16px; display: flex; justify-content: space-between; }
-  .bar {
-    height: 8px;
-    background: var(--panel-2);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 8px 0 12px;
+  table.pnl th, table.pnl td { padding:8px 12px; text-align:right; border-bottom:1px solid var(--border); }
+  table.pnl th:first-child, table.pnl td:first-child { text-align:left; }
+  table.pnl tr:last-child td { border-bottom:none; }
+  table.pnl thead th { background:var(--panel); color:var(--muted); font-weight:600; font-size:12px; }
+  table.pnl tr.highlight td { background:rgba(79,140,255,0.08); }
+  table.pnl td.pos { color:var(--ok); }
+  table.pnl td.neg { color:var(--err); }
+  .snapshot-bar {
+    font-size:12px; color:var(--muted); background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 14px; display:flex; flex-wrap:wrap; gap:14px;
   }
-  .bar > div {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), #22c55e);
-    transition: width 0.4s ease;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    padding: 4px 0;
-    font-size: 13px;
-  }
-  .row .k { color: var(--muted); }
-  .row .v { font-variant-numeric: tabular-nums; }
-  .flash { animation: flash 0.6s ease; }
-  @keyframes flash {
-    0% { background-color: rgba(79, 140, 255, 0.25); }
-    100% { background-color: transparent; }
-  }
-  .times {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    font-size: 13px;
-  }
-  .times .row .v { color: var(--text); }
+  .snapshot-bar span b { color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
   .err-box {
-    background: rgba(239, 68, 68, 0.1);
-    border: 1px solid var(--err);
-    color: #fca5a5;
-    padding: 10px 14px;
-    border-radius: 6px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    display: none;
-    white-space: pre-wrap;
+    background:rgba(239,68,68,0.1); border:1px solid var(--err); color:#fca5a5;
+    padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:13px;
+    display:none; white-space:pre-wrap;
   }
   .log {
-    margin-top: 20px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12px;
-    color: var(--muted);
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 10px 12px;
-    max-height: 140px;
-    overflow: auto;
+    margin-top:16px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size:12px; color:var(--muted); background:var(--panel); border:1px solid var(--border);
+    border-radius:6px; padding:10px 12px; max-height:120px; overflow:auto;
   }
+  .flash { animation: flash 0.6s ease; }
+  @keyframes flash { 0% { background-color:rgba(79,140,255,0.25); } 100% { background-color:transparent; } }
+  .muted { color:var(--muted); font-size:12px; font-weight:normal; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>Gate IPO 实时数据 · <span id="coin">SPCX</span></h1>
+  <h1>Gate SpaceX 收益预估 · SPCX</h1>
   <div class="status">
     <span id="dot" class="dot"></span>
     <span id="statusText">等待首次加载…</span>
@@ -167,285 +103,534 @@
   <label>数据源
     <select id="src">
       <option value="auto">自动（推荐）</option>
-      <option value="local">本地代理 /api/ipo</option>
+      <option value="local">本地代理</option>
       <option value="corsproxy">corsproxy.io</option>
       <option value="allorigins">allorigins.win</option>
       <option value="codetabs">codetabs.com</option>
-      <option value="direct">直连（多半会被 CORS 拦截）</option>
+      <option value="direct">直连</option>
     </select>
   </label>
-  <label>刷新
-    <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒
-  </label>
-  <label>项目 ID
-    <input id="pid" type="number" min="1" value="2" style="width:70px" />
-  </label>
+  <label>刷新 <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒</label>
+  <label>项目 ID <input id="pid" type="number" min="1" value="2" style="width:70px" /></label>
   <button id="apply">应用</button>
 </div>
 
 <div id="err" class="err-box"></div>
 
-<div class="grid" id="overview"></div>
-<div class="products" id="products"></div>
-<div class="times" id="times"></div>
+<section id="estimator" class="card">
+  <h2>收益预估</h2>
+
+  <div class="form-grid">
+    <div class="field">
+      <label class="ttl">选择池子</label>
+      <div class="radio-row">
+        <label><input type="radio" name="pool" value="USDT" checked> USDT 池 (70%)</label>
+        <label><input type="radio" name="pool" value="GUSD"> GUSD 池 (30%)</label>
+      </div>
+      <div class="hint" id="poolHint"></div>
+    </div>
+
+    <div class="field">
+      <label class="ttl">投入金额（≥ 100）</label>
+      <input id="amount" type="number" min="100" step="1" value="10000" />
+      <div class="hint" id="amountHint"></div>
+    </div>
+
+    <div class="field">
+      <label class="ttl">入场小时偏移 <span id="hourLabel" style="color:var(--text)">0.00h</span></label>
+      <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
+      <div class="quick-btns">
+        <button data-q="start">认购开始时</button>
+        <button data-q="now">现在</button>
+        <button data-q="last1h">结束前 1h</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-grid">
+    <div class="card"><div class="label">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
+    <div class="card"><div class="label">预计中签率</div><div id="r-ratio" class="value">—</div><div id="r-ratio-sub" class="sub"></div></div>
+    <div class="card"><div class="label">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
+    <div class="card"><div class="label">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
+    <div class="card"><div class="label">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub">假设单位：USDT</div></div>
+  </div>
+
+  <h3>盈亏表（按退出价 × SPCX − 成本）</h3>
+  <table class="pnl" id="pnlTable">
+    <thead><tr><th>退出价</th><th>价格 (USDT)</th><th>收入</th><th>盈亏</th><th>ROI</th></tr></thead>
+    <tbody id="pnlBody"></tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>当前池子快照 <span id="windowRemain" class="muted"></span></h2>
+  <div class="snapshot-bar" id="snapshotBar">加载中…</div>
+</section>
+
 <div class="log" id="log"></div>
 
 <script>
-const UPSTREAM = (pid) =>
+// ---------- 数据源 ----------
+const IPO_UPSTREAM = (pid) =>
   `https://www.gate.com/apiw/v2/launch/ipos/project-detail?sub_website_id=0&project_id=${pid}`;
+const KLINE_UPSTREAM = (q) =>
+  `https://dquery.sintral.io/u-kline/v1/k-line/candles?${q}`;
 
-const SOURCES = {
-  local: (pid) => `/api/ipo?project_id=${pid}`,
-  corsproxy: (pid) => `https://corsproxy.io/?url=` + encodeURIComponent(UPSTREAM(pid)),
-  allorigins: (pid) => `https://api.allorigins.win/raw?url=` + encodeURIComponent(UPSTREAM(pid)),
-  codetabs: (pid) => `https://api.codetabs.com/v1/proxy/?quest=` + encodeURIComponent(UPSTREAM(pid)),
-  direct: (pid) => UPSTREAM(pid),
+const IPO_SOURCES = {
+  local:      (pid) => `/api/ipo?project_id=${pid}`,
+  corsproxy:  (pid) => `https://corsproxy.io/?url=` + encodeURIComponent(IPO_UPSTREAM(pid)),
+  allorigins: (pid) => `https://api.allorigins.win/raw?url=` + encodeURIComponent(IPO_UPSTREAM(pid)),
+  codetabs:   (pid) => `https://api.codetabs.com/v1/proxy/?quest=` + encodeURIComponent(IPO_UPSTREAM(pid)),
+  direct:     (pid) => IPO_UPSTREAM(pid),
+};
+const KLINE_SOURCES = {
+  local:      (q) => `/api/kline?${q}`,
+  corsproxy:  (q) => `https://corsproxy.io/?url=` + encodeURIComponent(KLINE_UPSTREAM(q)),
+  allorigins: (q) => `https://api.allorigins.win/raw?url=` + encodeURIComponent(KLINE_UPSTREAM(q)),
+  codetabs:   (q) => `https://api.codetabs.com/v1/proxy/?quest=` + encodeURIComponent(KLINE_UPSTREAM(q)),
+  direct:     (q) => KLINE_UPSTREAM(q),
 };
 
-let state = {
+// ---------- 状态 ----------
+const state = {
   src: 'auto',
   intervalSec: 10,
   pid: 2,
+  api: null,
+  kline: null,
+  workingIpo: null,
+  workingKline: null,
+  lastIpoOk: 0,
+  lastKlineOk: 0,
+  hourInitialized: false,
   timer: null,
   cdTimer: null,
   nextAt: 0,
-  prev: {},
-  workingSrc: null,
-  lastOk: 0,
 };
 
-function log(msg, kind) {
-  const el = document.getElementById('log');
-  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-  const color = kind === 'err' ? '#fca5a5' : kind === 'ok' ? '#86efac' : '#8a92a6';
-  el.innerHTML = `<div style="color:${color}">[${time}] ${msg}</div>` + el.innerHTML;
-  if (el.childNodes.length > 50) el.removeChild(el.lastChild);
-}
-
-function fmtNum(n, digits = 2) {
+// ---------- 工具 ----------
+function $(id) { return document.getElementById(id); }
+function fmtNum(n, d = 2) {
   const x = Number(n);
-  if (!isFinite(x)) return String(n);
-  return x.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  if (!isFinite(x)) return '—';
+  return x.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 function fmtInt(n) {
   const x = Number(n);
-  if (!isFinite(x)) return String(n);
-  return x.toLocaleString('en-US');
+  return isFinite(x) ? x.toLocaleString('en-US') : '—';
 }
 function fmtUSD(n) {
   const x = Number(n);
-  if (!isFinite(x)) return String(n);
-  if (x >= 1e12) return '$' + (x / 1e12).toFixed(2) + 'T';
-  if (x >= 1e9)  return '$' + (x / 1e9).toFixed(2)  + 'B';
-  if (x >= 1e6)  return '$' + (x / 1e6).toFixed(2)  + 'M';
+  if (!isFinite(x)) return '—';
+  if (x >= 1e12) return '$' + (x/1e12).toFixed(2) + 'T';
+  if (x >= 1e9)  return '$' + (x/1e9).toFixed(2) + 'B';
+  if (x >= 1e6)  return '$' + (x/1e6).toFixed(2) + 'M';
   return '$' + fmtNum(x);
 }
-function fmtTime(ts) {
-  if (!ts) return '-';
-  return new Date(ts * 1000).toLocaleString('zh-CN', { hour12: false });
+function fmtPct(n, d = 4) {
+  const x = Number(n);
+  return isFinite(x) ? x.toFixed(d) + '%' : '—';
 }
-function statusText(front) {
-  return ({ 1: '预热中', 2: '认购中', 3: '认购结束', 4: '已分发' })[front] || '未知';
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function log(msg, kind) {
+  const el = $('log');
+  const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const color = kind === 'err' ? '#fca5a5' : kind === 'ok' ? '#86efac' : '#8a92a6';
+  el.innerHTML = `<div style="color:${color}">[${time}] ${msg}</div>` + el.innerHTML;
+  while (el.childNodes.length > 50) el.removeChild(el.lastChild);
 }
-
-function renderCard(parent, id, label, value, sub, animate) {
-  let el = parent.querySelector('#' + id);
-  if (!el) {
-    el = document.createElement('div');
-    el.className = 'card';
-    el.id = id;
-    el.innerHTML = `<div class="label"></div><div class="value"></div><div class="sub"></div>`;
-    parent.appendChild(el);
-  }
-  el.querySelector('.label').textContent = label;
-  const valEl = el.querySelector('.value');
-  if (valEl.textContent !== value) {
-    valEl.textContent = value;
-    if (animate) {
-      el.classList.remove('flash');
-      void el.offsetWidth;
-      el.classList.add('flash');
-    }
-  }
-  el.querySelector('.sub').textContent = sub || '';
-}
-
-function render(json) {
-  const d = json.data;
-  document.getElementById('coin').textContent = d.coin || '';
-
-  const overview = document.getElementById('overview');
-  renderCard(overview, 'c-status', '状态', statusText(d.front_status), `project_id=${d.id}`, false);
-  renderCard(overview, 'c-valuation', '隐含估值', fmtUSD(d.implied_valuation), `总份额 ${fmtInt(d.total_shares)}`, false);
-  renderCard(
-    overview,
-    'c-overall',
-    '综合进度',
-    (+d.combined_progress_rate).toFixed(4) + '%',
-    `认购比 ${(+d.subscription_ratio).toFixed(4)}`,
-    state.prev.combined_progress_rate !== d.combined_progress_rate
-  );
-  state.prev.combined_progress_rate = d.combined_progress_rate;
-
-  const productsEl = document.getElementById('products');
-  productsEl.innerHTML = '';
-  (d.products || []).forEach((p) => {
-    const prevP = state.prev['p' + p.id] || {};
-    const changed = (k) => prevP[k] !== undefined && prevP[k] !== p[k];
-    const rate = Math.min(100, Number(p.progress_rate) || 0);
-    const card = document.createElement('div');
-    card.className = 'product';
-    card.innerHTML = `
-      <h2><span>${p.coin} 池</span><span>${(+p.progress_rate).toFixed(4)}%</span></h2>
-      <div class="bar"><div style="width:${rate}%"></div></div>
-      <div class="row"><span class="k">单价</span><span class="v">${p.price} ${p.coin}</span></div>
-      <div class="row ${changed('invest_amount') ? 'flash' : ''}"><span class="k">总投入</span><span class="v">${fmtNum(p.invest_amount)} ${p.coin}</span></div>
-      <div class="row ${changed('valid_invest_amount') ? 'flash' : ''}"><span class="k">有效投入</span><span class="v">${fmtNum(p.valid_invest_amount)} ${p.coin}</span></div>
-      <div class="row ${changed('mortgage_count') ? 'flash' : ''}"><span class="k">质押人数</span><span class="v">${fmtInt(p.mortgage_count)}</span></div>
-      <div class="row ${changed('subscription_ratio') ? 'flash' : ''}"><span class="k">认购比</span><span class="v">${(+p.subscription_ratio).toFixed(4)}x</span></div>
-      <div class="row"><span class="k">份额上限/用户</span><span class="v">${p.user_top_share}</span></div>
-      <div class="row"><span class="k">总份额</span><span class="v">${fmtInt(p.total_shares)}</span></div>
-      <div class="row ${changed('user_invest_amount') ? 'flash' : ''}"><span class="k">我的投入</span><span class="v">${fmtNum(p.user_invest_amount)} ${p.coin}</span></div>
-      <div class="row"><span class="k">最低认购</span><span class="v">${p.subscribe_min} ${p.coin}</span></div>
-    `;
-    productsEl.appendChild(card);
-    state.prev['p' + p.id] = { ...p };
-  });
-
-  document.getElementById('times').innerHTML = `
-    <div class="row"><span class="k">预热时间</span><span class="v">${fmtTime(d.warm_up_time)}</span></div>
-    <div class="row"><span class="k">开始认购</span><span class="v">${fmtTime(d.start_time)}</span></div>
-    <div class="row"><span class="k">结束认购</span><span class="v">${fmtTime(d.end_time)}</span></div>
-    <div class="row"><span class="k">发放时间</span><span class="v">${fmtTime(d.distribute_time)}</span></div>
-    <div class="row"><span class="k">是否白名单</span><span class="v">${d.is_whitelist ? '是' : '否'}</span></div>
-    <div class="row"><span class="k">分发状态</span><span class="v">${d.distribute_status}</span></div>
-  `;
-}
-
 function setStatus(kind, msg) {
-  document.getElementById('dot').className = 'dot ' + (kind || '');
-  document.getElementById('statusText').textContent = msg;
+  $('dot').className = 'dot ' + (kind || '');
+  $('statusText').textContent = msg;
 }
-
 function showError(msg) {
-  const el = document.getElementById('err');
+  const el = $('err');
   if (msg) { el.textContent = msg; el.style.display = 'block'; }
   else el.style.display = 'none';
 }
 
-async function tryFetch(sourceKey) {
-  const base = SOURCES[sourceKey](state.pid);
-  const url = base + (base.includes('?') ? '&' : '?') + '_t=' + Date.now();
+// ---------- 通用多源拉取 ----------
+async function tryOne(url) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 12000);
+  const tid = setTimeout(() => ctrl.abort(), 12000);
   try {
     const r = await fetch(url, { cache: 'no-store', signal: ctrl.signal });
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     const text = await r.text();
-    let json;
-    try { json = JSON.parse(text); }
+    try { return JSON.parse(text); }
     catch { throw new Error('返回非 JSON：' + text.slice(0, 80)); }
-    if (json.code !== 200) throw new Error(json.message || `code=${json.code}`);
-    if (!json.data) throw new Error('缺少 data 字段');
-    return json;
   } finally {
-    clearTimeout(timer);
+    clearTimeout(tid);
   }
 }
 
-async function fetchOnce() {
-  if (!state.lastOk) setStatus('', '加载中…');
-
-  const order =
-    state.src === 'auto'
-      ? (state.workingSrc
-          ? [state.workingSrc, 'local', 'corsproxy', 'allorigins', 'codetabs', 'direct']
-          : (location.protocol === 'file:'
-              ? ['corsproxy', 'allorigins', 'codetabs', 'direct']
-              : ['local', 'corsproxy', 'allorigins', 'codetabs', 'direct']))
-      : [state.src];
+async function fetchFrom(label, sources, buildArg, validate, workingField) {
+  const userSrc = state.src;
+  const working = state[workingField];
+  const fileMode = location.protocol === 'file:';
+  const order = userSrc === 'auto'
+    ? (working
+        ? [working, 'local', 'corsproxy', 'allorigins', 'codetabs', 'direct']
+        : (fileMode
+            ? ['corsproxy', 'allorigins', 'codetabs', 'direct']
+            : ['local', 'corsproxy', 'allorigins', 'codetabs', 'direct']))
+    : [userSrc];
 
   const seen = new Set();
-  const errs = [];
   for (const key of order) {
-    if (seen.has(key)) continue;
+    if (seen.has(key) || !sources[key]) continue;
     seen.add(key);
+    const base = sources[key](buildArg);
+    const url = base + (base.includes('?') ? '&' : '?') + '_t=' + Date.now();
     try {
-      const json = await tryFetch(key);
-      render(json);
-      showError('');
-      state.workingSrc = key;
-      state.lastOk = Date.now();
-      setStatus('ok', `已更新 · 数据源 ${key} · ${new Date().toLocaleTimeString('zh-CN', { hour12: false })}`);
-      log(`✓ ${key} 成功`, 'ok');
-      return;
+      const json = await tryOne(url);
+      const v = validate(json);
+      state[workingField] = key;
+      log(`✓ ${label} via ${key}`, 'ok');
+      return v;
     } catch (e) {
-      const msg = `${key} 失败：${e.message}`;
-      errs.push(msg);
-      log('✗ ' + msg, 'err');
-      if (key === state.workingSrc) state.workingSrc = null;
+      log(`✗ ${label} via ${key}: ${e.message}`, 'err');
+      if (key === state[workingField]) state[workingField] = null;
     }
   }
-  // 全部失败：保留上次数据，仅更新状态栏
-  if (state.lastOk) {
-    const ago = Math.round((Date.now() - state.lastOk) / 1000);
-    setStatus('err', `本轮全部失败，保留 ${ago}s 前数据`);
-    showError('');
+  throw new Error(`${label} 所有数据源均失败`);
+}
+
+// ---------- IPO / K-line 拉取 ----------
+async function fetchIpo() {
+  return fetchFrom('ipo', IPO_SOURCES, state.pid, (json) => {
+    if (json.code !== 200) throw new Error(json.message || `code=${json.code}`);
+    if (!json.data) throw new Error('缺少 data');
+    return json;
+  }, 'workingIpo');
+}
+
+async function fetchKline() {
+  const q = 'address=PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh&interval=1min&limit=10&platform=solana&to=' + Date.now();
+  return fetchFrom('kline', KLINE_SOURCES, q, (json) => {
+    // 容忍 array / {data:[]} / {candles:[]} 三种
+    const arr = Array.isArray(json) ? json
+              : Array.isArray(json && json.data) ? json.data
+              : Array.isArray(json && json.candles) ? json.candles
+              : Array.isArray(json && json.data && json.data.candles) ? json.data.candles
+              : null;
+    if (!arr) throw new Error('未识别 K-line 响应');
+    return arr;
+  }, 'workingKline');
+}
+
+function latestClose(arr) {
+  if (!Array.isArray(arr) || !arr.length) return null;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const c = arr[i];
+    let close;
+    if (Array.isArray(c)) {
+      // 常见形式 [t, o, h, l, c, v] — 收盘是第 5 位
+      close = +c[4];
+      if (!isFinite(close) || close <= 0) {
+        // 退一步：试 [t, o, c, h, l, v]
+        close = +c[2];
+      }
+    } else if (c && typeof c === 'object') {
+      close = +(c.c ?? c.close ?? c.closePrice ?? c.last ?? 0);
+    }
+    if (isFinite(close) && close > 0) return close;
+  }
+  return null;
+}
+
+// ---------- 估算公式 ----------
+const T_HOURS = 48;
+const POOL_FALLBACK = { USDT: 23730, GUSD: 10170 };
+const USER_CAP_FALLBACK = { USDT: 237.3, GUSD: 101.7 };
+
+function userAvgFn(X, t, T = T_HOURS) {
+  return X * Math.max(0, T - t) / T;
+}
+
+function estimate(api, inputs) {
+  const products = (api && api.data && api.data.products) || [];
+  let p = products.find(x => x.coin === inputs.pool) || null;
+  const poolTotal = p ? +p.total_shares || POOL_FALLBACK[inputs.pool] : POOL_FALLBACK[inputs.pool];
+  const userCap = p ? +p.user_top_share || USER_CAP_FALLBACK[inputs.pool] : USER_CAP_FALLBACK[inputs.pool];
+  const validNow = p ? +p.valid_invest_amount || 0 : 0;
+  const investNow = p ? +p.invest_amount || 0 : 0;
+  const price = p ? +p.price || 590 : 590;
+
+  const X = inputs.amount;
+  const t = inputs.hour;
+  const userAvg = userAvgFn(X, t);
+
+  let shareRatio, note = '';
+  if (validNow <= 0) {
+    shareRatio = 1;
+    note = '池子暂无他人有效投入';
   } else {
-    showError('所有数据源均失败：\n' + errs.join('\n'));
-    setStatus('err', '请求失败（尚无历史数据）');
+    shareRatio = userAvg / (validNow + userAvg);
+  }
+  const spcxRaw = shareRatio * poolTotal;
+  const cappedByTop = spcxRaw > userCap;
+  const spcx = Math.min(spcxRaw, userCap);
+
+  return {
+    userAvg, validNow, investNow, shareRatio, spcxRaw, spcx, cappedByTop,
+    cost: X, pool: inputs.pool, poolTotal, userCap, price, note,
+  };
+}
+
+// ---------- 盈亏表 ----------
+function buildPnl(spcx, cost, priceNow) {
+  const rows = [];
+  if (priceNow && isFinite(priceNow) && priceNow > 0) {
+    rows.push({ label: '现价', exit: priceNow });
+  }
+  [
+    { label: '成本价 590', exit: 590 },
+    { label: '-50%',  exit: 295 },
+    { label: '-20%',  exit: 472 },
+    { label: '+20%',  exit: 708 },
+    { label: '+50%',  exit: 885 },
+    { label: '+100%', exit: 1180 },
+    { label: '+300%', exit: 2360 },
+  ].forEach(r => rows.push(r));
+  return rows.map(r => {
+    const revenue = r.exit * spcx;
+    const profit = revenue - cost;
+    const roiPct = cost > 0 ? (profit / cost) * 100 : 0;
+    return { ...r, revenue, profit, roiPct };
+  });
+}
+
+// ---------- 输入与时间 ----------
+function readInputs() {
+  const pool = (document.querySelector('input[name="pool"]:checked') || {}).value || 'USDT';
+  const amount = Math.max(0, Number($('amount').value) || 0);
+  const hour = clamp(Number($('hour').value) || 0, 0, 48);
+  return { pool, amount, hour };
+}
+
+function defaultHourOffset(startTs, endTs, now = Date.now()) {
+  if (!startTs || !endTs) return 0;
+  const startMs = startTs * 1000, endMs = endTs * 1000;
+  if (now <= startMs) return 0;
+  if (now >= endMs) return 48;
+  return clamp((now - startMs) / 3_600_000, 0, 48);
+}
+
+function setHour(v) {
+  const h = clamp(v, 0, 48);
+  $('hour').value = h;
+  $('hourLabel').textContent = h.toFixed(2) + 'h';
+}
+
+// ---------- 渲染 ----------
+function renderEstimator() {
+  if (!state.api) return;
+  const inputs = readInputs();
+  const r = estimate(state.api, inputs);
+  const price = latestClose(state.kline);
+
+  // 输入校验
+  const amountEl = $('amount');
+  const amountHint = $('amountHint');
+  if (inputs.amount < 100) {
+    amountEl.classList.add('invalid');
+    amountHint.textContent = `最低 100 ${inputs.pool}`;
+    amountHint.classList.add('err');
+  } else {
+    amountEl.classList.remove('invalid');
+    amountHint.textContent = '';
+    amountHint.classList.remove('err');
+  }
+  $('hourLabel').textContent = inputs.hour.toFixed(2) + 'h';
+
+  // 结果卡片
+  $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
+  $('r-avg-sub').textContent = `= ${fmtNum(r.cost)} × (48 − ${inputs.hour.toFixed(2)}) / 48`;
+
+  $('r-ratio').textContent = fmtPct(r.shareRatio * 100);
+  $('r-ratio-sub').textContent = r.note || `池当前加权总和 ${fmtNum(r.validNow)}`;
+
+  $('r-spcx').textContent = fmtNum(r.spcx, 4) + ' SPCX';
+  $('r-spcx-sub').textContent = r.cappedByTop
+    ? `⚠️ 受单用户上限 ${r.userCap} 截断（原 ${fmtNum(r.spcxRaw, 4)}）`
+    : `原值 ${fmtNum(r.spcxRaw, 4)} · 上限 ${r.userCap}`;
+
+  $('r-cost').textContent = fmtNum(r.cost) + ' ' + r.pool;
+  $('r-cost-sub').textContent = `${r.pool} 池 · 单价 ${r.price}`;
+
+  $('r-price').textContent = price == null ? '—' : fmtNum(price, 4);
+  $('r-price-sub').textContent = price == null
+    ? '盘前 K-line 暂不可用'
+    : '假设单位：USDT · 最新收盘';
+
+  // 盈亏表
+  const rows = buildPnl(r.spcx, r.cost, price);
+  const body = $('pnlBody');
+  body.innerHTML = rows.map(row => {
+    const cls = row.profit >= 0 ? 'pos' : 'neg';
+    const highlight = row.label === '现价' ? ' class="highlight"' : '';
+    return `<tr${highlight}>
+      <td>${row.label}</td>
+      <td>${fmtNum(row.exit, 2)}</td>
+      <td>${fmtNum(row.revenue, 2)}</td>
+      <td class="${cls}">${row.profit >= 0 ? '+' : ''}${fmtNum(row.profit, 2)}</td>
+      <td class="${cls}">${row.roiPct >= 0 ? '+' : ''}${row.roiPct.toFixed(2)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSnapshotBar() {
+  if (!state.api) { $('snapshotBar').textContent = '加载中…'; return; }
+  const d = state.api.data;
+  const products = d.products || [];
+  const usdt = products.find(p => p.coin === 'USDT');
+  const gusd = products.find(p => p.coin === 'GUSD');
+  const nowMs = Date.now();
+  const endMs = (d.end_time || 0) * 1000;
+  const remainH = Math.max(0, (endMs - nowMs) / 3_600_000);
+  const hh = Math.floor(remainH);
+  const mm = Math.floor((remainH - hh) * 60);
+  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+
+  const fmtPool = (p) => p ? `${p.coin} 池投入 <b>${fmtNum(p.invest_amount)}</b> · 认购比 <b>${(+p.subscription_ratio).toFixed(2)}x</b>` : '';
+
+  $('snapshotBar').innerHTML = [
+    `<span>@ ${t}</span>`,
+    `<span>${fmtPool(usdt)}</span>`,
+    `<span>${fmtPool(gusd)}</span>`,
+    `<span>剩余 <b>${hh}h ${mm}m</b></span>`,
+    `<span>综合认购比 <b>${(+d.subscription_ratio).toFixed(2)}x</b></span>`,
+  ].join('');
+  $('windowRemain').textContent = nowMs >= endMs ? '（认购已结束）' : `（剩余 ${hh}h ${mm}m）`;
+}
+
+// ---------- tick 循环 ----------
+async function tickAll() {
+  if (!state.lastIpoOk && !state.lastKlineOk) setStatus('', '加载中…');
+
+  const [ipoR, klineR] = await Promise.allSettled([fetchIpo(), fetchKline()]);
+  let any = false;
+  if (ipoR.status === 'fulfilled') {
+    state.api = ipoR.value;
+    state.lastIpoOk = Date.now();
+    any = true;
+    // 首次成功时，把 slider 设为"现在"
+    if (!state.hourInitialized) {
+      const d = state.api.data;
+      setHour(defaultHourOffset(d.start_time, d.end_time));
+      state.hourInitialized = true;
+    }
+  }
+  if (klineR.status === 'fulfilled') {
+    state.kline = klineR.value;
+    state.lastKlineOk = Date.now();
+    any = true;
+  }
+
+  renderSnapshotBar();
+  renderEstimator();
+
+  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  if (any) {
+    showError('');
+    const parts = [];
+    if (ipoR.status === 'fulfilled') parts.push('ipo✓');
+    else parts.push('ipo✗');
+    if (klineR.status === 'fulfilled') parts.push('kline✓');
+    else parts.push('kline✗');
+    setStatus('ok', `已更新 · ${parts.join(' ')} · ${t}`);
+  } else {
+    if (state.lastIpoOk || state.lastKlineOk) {
+      const last = Math.max(state.lastIpoOk, state.lastKlineOk);
+      const ago = Math.round((Date.now() - last) / 1000);
+      setStatus('err', `本轮全部失败，保留 ${ago}s 前数据`);
+      showError('');
+    } else {
+      setStatus('err', '首次拉取失败');
+      showError('ipo / kline 全部数据源失败，见下方日志');
+    }
   }
 }
 
 function startLoop() {
   if (state.timer) clearInterval(state.timer);
   if (state.cdTimer) clearInterval(state.cdTimer);
-  fetchOnce();
+  tickAll();
   state.nextAt = Date.now() + state.intervalSec * 1000;
   state.timer = setInterval(() => {
-    fetchOnce();
+    tickAll();
     state.nextAt = Date.now() + state.intervalSec * 1000;
   }, state.intervalSec * 1000);
   state.cdTimer = setInterval(() => {
     const s = Math.max(0, Math.round((state.nextAt - Date.now()) / 1000));
-    document.getElementById('countdown').textContent = ' · 下一次 ' + s + 's';
-  }, 200);
+    $('countdown').textContent = ' · 下一次 ' + s + 's';
+  }, 250);
 }
 
+// ---------- 持久化 ----------
 function persist() {
   try {
-    localStorage.setItem(
-      'gate-ipo-cfg',
-      JSON.stringify({ src: state.src, intervalSec: state.intervalSec, pid: state.pid })
-    );
+    localStorage.setItem('gate-spcx-cfg', JSON.stringify({
+      src: state.src, intervalSec: state.intervalSec, pid: state.pid,
+      pool: (document.querySelector('input[name="pool"]:checked') || {}).value,
+      amount: $('amount').value,
+    }));
   } catch {}
 }
-
 function restore() {
   try {
-    const s = JSON.parse(localStorage.getItem('gate-ipo-cfg') || '{}');
+    const s = JSON.parse(localStorage.getItem('gate-spcx-cfg') || '{}');
     if (s.src) state.src = s.src;
     if (s.intervalSec) state.intervalSec = s.intervalSec;
     if (s.pid) state.pid = s.pid;
+    if (s.pool) {
+      const el = document.querySelector(`input[name="pool"][value="${s.pool}"]`);
+      if (el) el.checked = true;
+    }
+    if (s.amount) $('amount').value = s.amount;
   } catch {}
-  document.getElementById('src').value = state.src;
-  document.getElementById('interval').value = state.intervalSec;
-  document.getElementById('pid').value = state.pid;
+  $('src').value = state.src;
+  $('interval').value = state.intervalSec;
+  $('pid').value = state.pid;
 }
 
-document.getElementById('apply').addEventListener('click', () => {
-  state.src = document.getElementById('src').value;
-  state.intervalSec = Math.max(2, Number(document.getElementById('interval').value) || 10);
-  state.pid = Math.max(1, Number(document.getElementById('pid').value) || 2);
-  state.workingSrc = null;
-  state.prev = {};
-  state.lastOk = 0;
+// ---------- 事件绑定 ----------
+$('apply').addEventListener('click', () => {
+  state.src = $('src').value;
+  state.intervalSec = Math.max(2, Number($('interval').value) || 10);
+  state.pid = Math.max(1, Number($('pid').value) || 2);
+  state.workingIpo = null;
+  state.workingKline = null;
+  state.hourInitialized = false;
   persist();
   startLoop();
 });
 
+['amount', 'hour'].forEach(id => {
+  $(id).addEventListener('input', () => { renderEstimator(); persist(); });
+});
+document.querySelectorAll('input[name="pool"]').forEach(el => {
+  el.addEventListener('change', () => { renderEstimator(); persist(); });
+});
+document.querySelectorAll('.quick-btns button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const q = btn.getAttribute('data-q');
+    if (q === 'start') setHour(0);
+    else if (q === 'last1h') setHour(47);
+    else if (q === 'now' && state.api) {
+      const d = state.api.data;
+      setHour(defaultHourOffset(d.start_time, d.end_time));
+    }
+    renderEstimator();
+  });
+});
+
 restore();
+setHour(Number($('hour').value) || 0);
 startLoop();
 </script>
+
+
 </body>
 </html>
