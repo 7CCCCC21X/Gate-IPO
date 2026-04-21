@@ -271,12 +271,46 @@
   table.pnl tr.highlight td { background:rgba(0,102,255,.06); font-weight:600; }
   table.pnl td.pos { color:var(--c-success); font-weight:600; }
   table.pnl td.neg { color:var(--c-error); font-weight:600; }
-  .snapshot-bar {
-    font-size:13px; color:var(--c-sub); display:flex; flex-wrap:wrap; gap:18px;
-    padding:14px 18px; background:var(--c-card2);
-    border:1.5px solid var(--c-border); border-radius:var(--radius);
+  /* 双池卡 */
+  .pools-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
   }
-  .snapshot-bar span b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
+  .pool-card {
+    background:var(--c-card2); border:1.5px solid var(--c-border);
+    border-radius:var(--radius); padding:16px 18px;
+    transition:border-color .15s, transform .15s;
+  }
+  .pool-card:hover { border-color:var(--c-primary); transform:translateY(-1px); }
+  .pool-head {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;
+  }
+  .pool-badge {
+    font-size:13px; font-weight:800; padding:4px 12px; border-radius:8px;
+    letter-spacing:.3px;
+  }
+  .pool-badge-usdt { background:#22c55e22; color:#16a34a; }
+  .pool-badge-gusd { background:#4f8cff22; color:var(--c-primary); }
+  [data-theme="dark"] .pool-badge-usdt,
+  @media (prefers-color-scheme:dark) { :root:not([data-theme="light"]) .pool-badge-usdt { background:rgba(52,211,153,.15); color:#34d399; } }
+  .pool-weight {
+    font-size:11px; color:var(--c-sub); padding:2px 8px;
+    background:var(--c-card); border-radius:999px; font-weight:600;
+  }
+  .pool-stats {
+    display:grid; grid-template-columns:1fr 1fr; gap:8px 16px;
+  }
+  .pool-stat { min-width:0; }
+  .pool-label { font-size:11px; color:var(--c-sub); margin-bottom:3px; }
+  .pool-value {
+    font-size:15px; font-weight:700; font-variant-numeric:tabular-nums;
+    color:var(--c-text); letter-spacing:-.2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  @media (max-width: 640px) {
+    .pools-grid { grid-template-columns:1fr; gap:10px; }
+    .pool-card { padding:14px 16px; }
+    .pool-value { font-size:14px; }
+  }
   /* 综合进度条 */
   .progress-wrap { margin-top:14px; }
   .progress-bg {
@@ -500,8 +534,43 @@
 </div>
 
 <section class="card">
-  <h2><span data-i18n="snapshot.title">当前池子快照</span> <span id="windowRemain" class="muted"></span></h2>
-  <div class="snapshot-bar" id="snapshotBar" data-i18n="common.loading">加载中…</div>
+  <h2 data-i18n="snapshot.title">当前池子快照</h2>
+
+  <div class="pools-grid">
+    <div class="pool-card" id="poolUsdt">
+      <div class="pool-head">
+        <div class="pool-badge pool-badge-usdt">USDT</div>
+        <div class="pool-weight">70%</div>
+      </div>
+      <div class="pool-stats">
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
+          <div class="pool-value" id="poolUsdtInvest">—</div>
+        </div>
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
+          <div class="pool-value" id="poolUsdtRatio">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="pool-card" id="poolGusd">
+      <div class="pool-head">
+        <div class="pool-badge pool-badge-gusd">GUSD</div>
+        <div class="pool-weight">30%</div>
+      </div>
+      <div class="pool-stats">
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolTotal">当前总投入</div>
+          <div class="pool-value" id="poolGusdInvest">—</div>
+        </div>
+        <div class="pool-stat">
+          <div class="pool-label" data-i18n="snapshot.poolRatio">当前认购比</div>
+          <div class="pool-value" id="poolGusdRatio">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="progress-wrap">
     <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
     <div class="progress-meta">
@@ -639,6 +708,8 @@ const I18N = {
     'hero.price': '成本价',
     'hero.oversub': '综合超募',
     'snapshot.title': '当前池子快照',
+    'snapshot.poolTotal': '当前总投入',
+    'snapshot.poolRatio': '当前认购比',
     'snapshot.windowProgress': '认购窗口进度',
     'snapshot.remaining': '剩余',
     'snapshot.endedShort': '已结束',
@@ -717,6 +788,8 @@ const I18N = {
     'hero.remainLabel': 'Remaining',
     'hero.ended': 'Ended',
     'snapshot.title': 'Pool Snapshot',
+    'snapshot.poolTotal': 'Total Invested',
+    'snapshot.poolRatio': 'Subscribed Ratio',
     'snapshot.windowProgress': 'Subscription Window Progress',
     'snapshot.remaining': 'Remaining',
     'snapshot.endedShort': 'Ended',
@@ -1325,7 +1398,7 @@ function renderHero() {
 }
 
 function renderSnapshotBar() {
-  if (!state.api) { $('snapshotBar').textContent = t('common.loading'); return; }
+  if (!state.api) return;
   const d = state.api.data;
   const products = d.products || [];
   const usdt = products.find(p => p.coin === 'USDT');
@@ -1335,21 +1408,15 @@ function renderSnapshotBar() {
   const remainH = Math.max(0, (endMs - nowMs) / 3_600_000);
   const hh = Math.floor(remainH);
   const mm = Math.floor((remainH - hh) * 60);
-  const tstr = new Date().toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
 
-  const fmtPool = (p) => p
-    ? `${t('snapshot.poolInvest', { coin: p.coin })} <b>${fmtNum(p.invest_amount)}</b> · ${t('snapshot.subRatio')} <b>${(+p.subscription_ratio).toFixed(2)}x</b>`
-    : '';
-
-  $('snapshotBar').innerHTML = [
-    `<span>@ ${tstr}</span>`,
-    `<span>${fmtPool(usdt)}</span>`,
-    `<span>${fmtPool(gusd)}</span>`,
-    `<span>${t('snapshot.remaining')} <b>${hh}h ${mm}m</b></span>`,
-  ].join('');
-  $('windowRemain').textContent = nowMs >= endMs
-    ? t('snapshot.windowEnded')
-    : t('snapshot.windowRemain', { h: hh, m: mm });
+  if (usdt) {
+    $('poolUsdtInvest').textContent = fmtNum(usdt.invest_amount, 0) + ' USDT';
+    $('poolUsdtRatio').textContent = (+usdt.subscription_ratio).toFixed(2) + 'x';
+  }
+  if (gusd) {
+    $('poolGusdInvest').textContent = fmtNum(gusd.invest_amount, 0) + ' GUSD';
+    $('poolGusdRatio').textContent = (+gusd.subscription_ratio).toFixed(2) + 'x';
+  }
 
   // 时间进度条
   const startMs = (d.start_time || 0) * 1000;
