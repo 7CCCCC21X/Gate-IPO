@@ -424,7 +424,6 @@
 
   <div class="result-grid">
     <div class="card"><div class="label" data-i18n="result.avg">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
-    <div class="card"><div class="label" data-i18n="result.ratio">预计中签率</div><div id="r-ratio" class="value">—</div><div id="r-ratio-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.cost">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.spotPrice">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub" data-i18n="result.spotNote">假设单位：USDT</div></div>
@@ -1001,10 +1000,6 @@ function renderEstimator() {
   // 结果卡片
   $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
   $('r-avg-sub').textContent = t('result.avgFormula', { x: fmtNum(inputs.amount), h: inputs.hour.toFixed(2) });
-
-  $('r-ratio').textContent = fmtPct(r.shareRatio * 100);
-  $('r-ratio-sub').textContent = r.note ? t('result.ratioEmpty')
-    : t('result.ratioPool', { v: fmtNum(r.validNow) });
 
   tweenNumber($('r-spcx'), r.spcx, { decimals: 4, suffix: ' SPCX', duration: 500 });
   $('r-spcx-sub').textContent = r.cappedByTop
