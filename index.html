@@ -220,12 +220,6 @@
     padding:10px 14px; border-radius:var(--radius); margin-bottom:16px; font-size:13px;
     display:none; white-space:pre-wrap;
   }
-  .log {
-    margin-top:16px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:11px; color:var(--c-sub); background:var(--c-card2);
-    border:1px solid var(--c-border); border-radius:var(--radius);
-    padding:10px 14px; max-height:100px; overflow:auto;
-  }
   .flash { animation: flash 0.6s ease; }
   @keyframes flash { 0% { background-color:rgba(79,140,255,0.25); } 100% { background-color:transparent; } }
   .muted { color:var(--c-sub); font-size:12px; font-weight:400; }
@@ -487,8 +481,6 @@
   </div>
 </section>
 
-<div class="log" id="log"></div>
-
 <div class="footnote">
   数据来自 <a href="https://www.gate.com/launchpad" target="_blank" rel="noopener">Gate Launchpad</a> 与 <a href="https://dquery.sintral.io" target="_blank" rel="noopener">Sintral</a>，仅供参考。<br>
   中签率基于当前 <code>valid_invest_amount</code> 快照估算，最终分配以官方为准；超额部分按规则退款。
@@ -597,11 +589,9 @@ function fmtPct(n, d = 4) {
 }
 function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
 function log(msg, kind) {
-  const el = $('log');
   const time = new Date().toLocaleTimeString('zh-CN', { hour12: false });
-  const color = kind === 'err' ? '#fca5a5' : kind === 'ok' ? '#86efac' : '#8a92a6';
-  el.innerHTML = `<div style="color:${color}">[${time}] ${msg}</div>` + el.innerHTML;
-  while (el.childNodes.length > 50) el.removeChild(el.lastChild);
+  if (kind === 'err') console.warn(`[${time}] ${msg}`);
+  else console.log(`[${time}] ${msg}`);
 }
 function setStatus(kind, msg) {
   $('statusBadge').className = 'status ' + (kind || '');
