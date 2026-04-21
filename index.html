@@ -4,38 +4,82 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Gate SpaceX 收益预估 · SPCX</title>
+<meta name="color-scheme" content="light dark" />
 <style>
   :root {
-    --bg: #0b0e14; --panel: #151923; --panel-2: #1d2230;
-    --border: #262b3a; --text: #e6e9ef; --muted: #8a92a6;
-    --accent: #4f8cff; --ok: #22c55e; --warn: #f59e0b; --err: #ef4444;
+    --c-bg:#f0f2f5; --c-card:#fff; --c-card2:#f8fafc;
+    --c-text:#1a1a2e; --c-sub:#6b7280; --c-border:#e5e7eb;
+    --c-primary:#0066ff; --c-primary-light:rgba(0,102,255,.08); --c-primary-dark:#0050cc;
+    --c-success:#059669; --c-success-bg:rgba(5,150,105,.08);
+    --c-error:#dc2626;   --c-error-bg:rgba(220,38,38,.06);
+    --c-warn:#f59e0b;
+    --radius:14px;
+    --shadow:0 4px 24px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+    /* 兼容旧类名 */
+    --bg:var(--c-bg); --panel:var(--c-card); --panel-2:var(--c-card2);
+    --border:var(--c-border); --text:var(--c-text); --muted:var(--c-sub);
+    --accent:var(--c-primary); --ok:var(--c-success); --warn:var(--c-warn); --err:var(--c-error);
   }
-  * { box-sizing: border-box; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --c-bg:#0f1117; --c-card:#1a1d2e; --c-card2:#222640;
+      --c-text:#e8eaed; --c-sub:#8b92a5; --c-border:#2d3148;
+      --c-primary:#4d8eff; --c-primary-light:rgba(77,142,255,.12); --c-primary-dark:#6ea0ff;
+      --c-success:#34d399; --c-success-bg:rgba(52,211,153,.1);
+      --c-error:#f87171;   --c-error-bg:rgba(248,113,113,.08);
+      --shadow:0 4px 24px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+    }
+  }
+  [data-theme="dark"] {
+    --c-bg:#0f1117; --c-card:#1a1d2e; --c-card2:#222640;
+    --c-text:#e8eaed; --c-sub:#8b92a5; --c-border:#2d3148;
+    --c-primary:#4d8eff; --c-primary-light:rgba(77,142,255,.12); --c-primary-dark:#6ea0ff;
+    --c-success:#34d399; --c-success-bg:rgba(52,211,153,.1);
+    --c-error:#f87171;   --c-error-bg:rgba(248,113,113,.08);
+    --shadow:0 4px 24px rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.2);
+  }
+  * { box-sizing: border-box; margin:0; padding:0; }
   body {
-    margin: 0; padding: 24px; background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    padding:0; background:var(--c-bg); color:var(--c-text); line-height:1.5;
+    font-family:-apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
   }
-  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px; }
-  h1 { font-size:20px; margin:0; }
-  h2 { font-size:16px; margin:0 0 14px; }
-  h3 { font-size:14px; margin:20px 0 10px; color:var(--muted); font-weight:600; }
-  .status { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
-  .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); }
-  .dot.ok { background:var(--ok); box-shadow:0 0 8px var(--ok); }
-  .dot.err { background:var(--err); box-shadow:0 0 8px var(--err); }
-  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; font-size:13px; color:var(--muted); }
+  header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:20px; }
+  h1 { font-size:22px; font-weight:700; letter-spacing:-.3px; color:var(--c-primary); }
+  h2 { font-size:16px; font-weight:700; margin:0 0 14px; letter-spacing:-.2px; }
+  h3 { font-size:13px; margin:18px 0 10px; color:var(--c-sub); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+  .status { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--c-sub);
+    padding:5px 12px; border-radius:999px; background:var(--c-card); border:1px solid var(--c-border); }
+  .status .dot { width:6px; height:6px; border-radius:50%; background:var(--c-sub); }
+  .status.ok .dot { background:var(--c-success); animation:pulse 1.5s infinite; }
+  .status.err .dot { background:var(--c-error); }
+  @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:.35 } }
+  .controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; font-size:13px; color:var(--c-sub); }
   .controls select, .controls input {
-    background:var(--panel); color:var(--text); border:1px solid var(--border);
-    border-radius:6px; padding:6px 10px; font-size:13px;
+    background:var(--c-card); color:var(--c-text); border:1.5px solid var(--c-border);
+    border-radius:8px; padding:6px 10px; font-size:13px; outline:none;
+    transition:border-color .2s, box-shadow .2s;
   }
-  .controls button, .quick-btns button {
-    background:var(--accent); color:#fff; border:none; border-radius:6px;
-    padding:6px 14px; font-size:13px; cursor:pointer;
+  .controls select:focus, .controls input:focus {
+    border-color:var(--c-primary); box-shadow:0 0 0 3px var(--c-primary-light);
   }
-  .controls button:hover, .quick-btns button:hover { filter:brightness(1.1); }
-  .quick-btns { display:flex; gap:6px; margin-top:6px; }
-  .quick-btns button { background:var(--panel-2); color:var(--text); border:1px solid var(--border); padding:4px 10px; font-size:12px; }
-  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
+  .controls button {
+    background:var(--c-primary); color:#fff; border:none; border-radius:8px;
+    padding:7px 16px; font-size:13px; font-weight:600; cursor:pointer;
+    box-shadow:0 2px 8px rgba(0,102,255,.2); transition:background .2s, box-shadow .2s;
+  }
+  .controls button:hover { background:var(--c-primary-dark); box-shadow:0 4px 12px rgba(0,102,255,.3); }
+  .quick-btns { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+  .quick-btns button {
+    background:var(--c-primary-light); color:var(--c-primary); border:1px solid transparent;
+    border-radius:999px; padding:5px 12px; font-size:12px; font-weight:600; cursor:pointer;
+    transition:background .15s, border-color .15s;
+  }
+  .quick-btns button:hover { background:rgba(0,102,255,.14); border-color:rgba(0,102,255,.25); }
+  .card {
+    background:var(--c-card); border:1px solid var(--c-border); border-radius:20px;
+    padding:24px; margin-bottom:16px; box-shadow:var(--shadow);
+  }
   .card .label { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .card .value { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
   .card .sub { color:var(--muted); font-size:12px; margin-top:4px; }
@@ -43,59 +87,165 @@
     display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;
   }
   .form-grid { margin-bottom:18px; }
-  .field label.ttl { display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
-  .field input[type="number"], .field input[type="range"] {
-    width:100%; background:var(--panel-2); color:var(--text);
-    border:1px solid var(--border); border-radius:6px; padding:8px 10px;
-    font-size:14px; font-variant-numeric:tabular-nums;
+  .field label.ttl { display:block; color:var(--c-text); font-size:13px; font-weight:600; margin-bottom:8px; }
+  .field input[type="number"] {
+    width:100%; background:var(--c-card); color:var(--c-text);
+    border:1.5px solid var(--c-border); border-radius:var(--radius);
+    padding:11px 14px; font-size:15px; font-variant-numeric:tabular-nums;
+    outline:none; transition:border-color .2s, box-shadow .2s;
   }
-  .field input.invalid { border-color:var(--err); }
-  .field .hint { font-size:11px; color:var(--muted); margin-top:4px; min-height:14px; }
-  .field .hint.err { color:var(--err); }
-  .radio-row label { display:inline-flex; align-items:center; gap:6px; margin-right:16px; font-size:14px; cursor:pointer; }
-  .radio-row input { accent-color:var(--accent); }
-  .result-grid .card { margin-bottom:0; padding:14px; background:var(--panel-2); }
-  .result-grid .card .value.green { color:var(--ok); }
-  .result-grid .card .value.red { color:var(--err); }
+  .field input[type="number"]:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px var(--c-primary-light); }
+  .field input[type="range"] { width:100%; accent-color:var(--c-primary); margin-top:4px; }
+  .field input.invalid { border-color:var(--c-error); }
+  .field .hint { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
+  .field .hint.err { color:var(--c-error); }
+  .radio-row { display:flex; gap:8px; flex-wrap:wrap; }
+  .radio-row label {
+    flex:1; min-width:120px; display:inline-flex; align-items:center; gap:8px;
+    padding:11px 14px; border:1.5px solid var(--c-border); border-radius:var(--radius);
+    background:var(--c-card); font-size:14px; font-weight:500; cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .radio-row label:has(input:checked) { border-color:var(--c-primary); background:var(--c-primary-light); color:var(--c-primary); }
+  .radio-row input { accent-color:var(--c-primary); }
+  .result-grid .card {
+    margin-bottom:0; padding:14px 16px; background:var(--c-card2);
+    border-radius:var(--radius); border:1.5px solid var(--c-border);
+    box-shadow:none; transition:border-color .15s;
+  }
+  .result-grid .card:hover { border-color:var(--c-primary); }
+  .result-grid .card .label { color:var(--c-sub); font-size:11px; margin-bottom:6px; font-weight:500; }
+  .result-grid .card .value { font-size:18px; font-weight:800; letter-spacing:-.3px; color:var(--c-text); }
+  .result-grid .card .value.green { color:var(--c-success); }
+  .result-grid .card .value.red { color:var(--c-error); }
+  /* 头条：预计盈亏大卡 */
+  .profit-card {
+    margin:16px 0 4px; padding:20px; border-radius:var(--radius);
+    text-align:center; transition:background .2s, border-color .2s;
+    border:1.5px solid var(--c-border); background:var(--c-card2);
+  }
+  .profit-card.positive { background:var(--c-success-bg); border-color:rgba(5,150,105,.25); }
+  .profit-card.negative { background:var(--c-error-bg);   border-color:rgba(220,38,38,.2); }
+  .profit-card .profit-label { font-size:13px; color:var(--c-sub); margin-bottom:6px; }
+  .profit-card .profit-value { font-size:30px; font-weight:800; letter-spacing:-.5px; }
+  .profit-card.positive .profit-value { color:var(--c-success); }
+  .profit-card.negative .profit-value { color:var(--c-error); }
+  .profit-card .profit-sub { font-size:12px; color:var(--c-sub); margin-top:4px; }
   table.pnl {
-    width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums;
-    background:var(--panel-2); border:1px solid var(--border); border-radius:6px; overflow:hidden;
+    width:100%; border-collapse:separate; border-spacing:0;
+    font-size:13px; font-variant-numeric:tabular-nums;
+    background:var(--c-card2); border:1.5px solid var(--c-border);
+    border-radius:var(--radius); overflow:hidden;
   }
-  table.pnl th, table.pnl td { padding:8px 12px; text-align:right; border-bottom:1px solid var(--border); }
+  table.pnl th, table.pnl td { padding:10px 14px; text-align:right; border-bottom:1px solid var(--c-border); }
   table.pnl th:first-child, table.pnl td:first-child { text-align:left; }
   table.pnl tr:last-child td { border-bottom:none; }
-  table.pnl thead th { background:var(--panel); color:var(--muted); font-weight:600; font-size:12px; }
-  table.pnl tr.highlight td { background:rgba(79,140,255,0.08); }
-  table.pnl td.pos { color:var(--ok); }
-  table.pnl td.neg { color:var(--err); }
-  .snapshot-bar {
-    font-size:12px; color:var(--muted); background:var(--panel); border:1px solid var(--border);
-    border-radius:6px; padding:10px 14px; display:flex; flex-wrap:wrap; gap:14px;
+  table.pnl thead th {
+    background:var(--c-card); color:var(--c-sub); font-weight:600; font-size:11px;
+    text-transform:uppercase; letter-spacing:.5px;
   }
-  .snapshot-bar span b { color:var(--text); font-weight:600; font-variant-numeric:tabular-nums; }
+  table.pnl tbody tr:hover td { background:var(--c-primary-light); }
+  table.pnl tr.highlight td { background:rgba(0,102,255,.06); font-weight:600; }
+  table.pnl td.pos { color:var(--c-success); font-weight:600; }
+  table.pnl td.neg { color:var(--c-error); font-weight:600; }
+  .snapshot-bar {
+    font-size:13px; color:var(--c-sub); display:flex; flex-wrap:wrap; gap:18px;
+    padding:14px 18px; background:var(--c-card2);
+    border:1.5px solid var(--c-border); border-radius:var(--radius);
+  }
+  .snapshot-bar span b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
+  /* 综合进度条 */
+  .progress-wrap { margin-top:14px; }
+  .progress-bg {
+    background:var(--c-border); height:8px; border-radius:999px; overflow:hidden;
+    position:relative;
+  }
+  .progress-bar {
+    background:linear-gradient(90deg, var(--c-primary), #38bdf8);
+    height:100%; width:0%; border-radius:999px;
+    transition:width .6s ease; position:relative;
+  }
+  .progress-bar::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+    animation:shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    0% { transform:translateX(-100%) } 100% { transform:translateX(100%) }
+  }
+  .progress-meta { display:flex; justify-content:space-between; margin-top:6px; font-size:12px; color:var(--c-sub); }
+  .progress-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
   .err-box {
-    background:rgba(239,68,68,0.1); border:1px solid var(--err); color:#fca5a5;
-    padding:10px 14px; border-radius:6px; margin-bottom:16px; font-size:13px;
+    background:var(--c-error); border:none; color:#fff;
+    padding:10px 14px; border-radius:var(--radius); margin-bottom:16px; font-size:13px;
     display:none; white-space:pre-wrap;
   }
   .log {
     margin-top:16px; font-family:ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size:12px; color:var(--muted); background:var(--panel); border:1px solid var(--border);
-    border-radius:6px; padding:10px 12px; max-height:120px; overflow:auto;
+    font-size:11px; color:var(--c-sub); background:var(--c-card2);
+    border:1px solid var(--c-border); border-radius:var(--radius);
+    padding:10px 14px; max-height:100px; overflow:auto;
   }
   .flash { animation: flash 0.6s ease; }
   @keyframes flash { 0% { background-color:rgba(79,140,255,0.25); } 100% { background-color:transparent; } }
-  .muted { color:var(--muted); font-size:12px; font-weight:normal; }
+  .muted { color:var(--c-sub); font-size:12px; font-weight:400; }
+  .flash { animation:flash 0.6s ease; }
+  @keyframes flash { 0% { background-color:var(--c-primary-light) } 100% { background-color:transparent } }
+  /* 图表 */
+  .chart-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; flex-wrap:wrap; gap:10px; }
+  .chart-price { font-size:28px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.5px; }
+  .chart-price .delta { font-size:13px; margin-left:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .chart-price .delta.up { background:var(--c-success-bg); color:var(--c-success); }
+  .chart-price .delta.down { background:var(--c-error-bg); color:var(--c-error); }
+  .chart-meta { font-size:12px; color:var(--c-sub); display:flex; gap:16px; flex-wrap:wrap; }
+  .chart-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
+  .chart-wrap {
+    background:var(--c-card2); border:1.5px solid var(--c-border);
+    border-radius:var(--radius); padding:10px;
+  }
+  svg#chart { width:100%; height:240px; display:block; }
+  .chart-range { display:flex; gap:6px; justify-content:flex-end; margin-top:10px; }
+  .chart-range button {
+    background:transparent; color:var(--c-sub); border:1.5px solid var(--c-border);
+    padding:5px 14px; font-size:12px; font-weight:600; border-radius:999px; cursor:pointer;
+    transition:all .15s;
+  }
+  .chart-range button:hover { border-color:var(--c-primary); color:var(--c-primary); }
+  .chart-range button.active { background:var(--c-primary); color:#fff; border-color:var(--c-primary); }
+  /* 页面容器 */
+  .page { max-width:960px; margin:0 auto; padding:24px 20px; }
+  h1 .badge {
+    font-size:11px; padding:3px 10px; border-radius:999px; background:var(--c-primary-light);
+    color:var(--c-primary); margin-left:10px; font-weight:600; vertical-align:middle; letter-spacing:.3px;
+  }
+  /* 主题切换 */
+  .theme-toggle {
+    background:transparent; color:var(--c-sub); border:1px solid var(--c-border);
+    width:34px; height:34px; border-radius:999px; cursor:pointer; font-size:15px;
+    display:inline-flex; align-items:center; justify-content:center; transition:all .15s;
+  }
+  .theme-toggle:hover { border-color:var(--c-primary); color:var(--c-primary); }
+  @media (max-width: 640px) {
+    .page { padding:16px 12px; }
+    .card { padding:18px; border-radius:16px; }
+    h1 { font-size:18px; }
+    .profit-card .profit-value { font-size:24px; }
+    .radio-row label { min-width:0; }
+  }
 </style>
 </head>
 <body>
+<div class="page">
 
 <header>
-  <h1>Gate SpaceX 收益预估 · SPCX</h1>
-  <div class="status">
-    <span id="dot" class="dot"></span>
-    <span id="statusText">等待首次加载…</span>
-    <span id="countdown"></span>
+  <h1>Gate SpaceX 收益预估 <span class="badge">SPCX · Pre-IPO</span></h1>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="statusBadge" class="status">
+      <span class="dot"></span>
+      <span id="statusText">等待首次加载…</span>
+      <span id="countdown"></span>
+    </span>
+    <button id="themeBtn" class="theme-toggle" title="切换主题">🌓</button>
   </div>
 </header>
 
@@ -147,6 +297,12 @@
     </div>
   </div>
 
+  <div id="profitCard" class="profit-card">
+    <div class="profit-label">当前盘前价下的预计盈亏</div>
+    <div id="profitValue" class="profit-value">—</div>
+    <div id="profitSub" class="profit-sub">等待数据加载…</div>
+  </div>
+
   <div class="result-grid">
     <div class="card"><div class="label">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
     <div class="card"><div class="label">预计中签率</div><div id="r-ratio" class="value">—</div><div id="r-ratio-sub" class="sub"></div></div>
@@ -162,12 +318,46 @@
   </table>
 </section>
 
+<section class="card" id="chartCard">
+  <div class="chart-head">
+    <div>
+      <div class="label" style="color:var(--muted);font-size:12px;margin-bottom:4px">预上市价 · SPCX/USDT · Solana</div>
+      <div class="chart-price">
+        <span id="cPrice">—</span>
+        <span id="cDelta" class="delta"></span>
+      </div>
+    </div>
+    <div class="chart-meta">
+      <span>开 <b id="cOpen">—</b></span>
+      <span>高 <b id="cHigh">—</b></span>
+      <span>低 <b id="cLow">—</b></span>
+      <span>样本 <b id="cCount">—</b></span>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <svg id="chart" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+  </div>
+  <div class="chart-range">
+    <button data-r="60">近 1h</button>
+    <button data-r="240" class="active">近 4h</button>
+    <button data-r="500">全部</button>
+  </div>
+</section>
+
 <section class="card">
   <h2>当前池子快照 <span id="windowRemain" class="muted"></span></h2>
   <div class="snapshot-bar" id="snapshotBar">加载中…</div>
+  <div class="progress-wrap">
+    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-meta">
+      <span>综合认购进度 <b id="progressPct">—</b></span>
+      <span>超额倍率 <b id="progressRatio">—</b></span>
+    </div>
+  </div>
 </section>
 
 <div class="log" id="log"></div>
+</div>  <!-- .page -->
 
 <script>
 // ---------- 数据源 ----------
@@ -240,7 +430,7 @@ function log(msg, kind) {
   while (el.childNodes.length > 50) el.removeChild(el.lastChild);
 }
 function setStatus(kind, msg) {
-  $('dot').className = 'dot ' + (kind || '');
+  $('statusBadge').className = 'status ' + (kind || '');
   $('statusText').textContent = msg;
 }
 function showError(msg) {
@@ -306,7 +496,7 @@ async function fetchIpo() {
 }
 
 async function fetchKline() {
-  const q = 'address=PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh&interval=1min&limit=10&platform=solana&to=' + Date.now();
+  const q = 'address=PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh&interval=1min&limit=500&platform=solana&to=' + Date.now();
   return fetchFrom('kline', KLINE_SOURCES, q, (json) => {
     // 容忍 array / {data:[]} / {candles:[]} 三种
     const arr = Array.isArray(json) ? json
@@ -319,24 +509,29 @@ async function fetchKline() {
   }, 'workingKline');
 }
 
-function latestClose(arr) {
-  if (!Array.isArray(arr) || !arr.length) return null;
-  for (let i = arr.length - 1; i >= 0; i--) {
-    const c = arr[i];
-    let close;
+function normalizeCandles(arr) {
+  if (!Array.isArray(arr)) return [];
+  const out = [];
+  for (const c of arr) {
+    let t, o, h, l, cl, v;
     if (Array.isArray(c)) {
-      // 常见形式 [t, o, h, l, c, v] — 收盘是第 5 位
-      close = +c[4];
-      if (!isFinite(close) || close <= 0) {
-        // 退一步：试 [t, o, c, h, l, v]
-        close = +c[2];
-      }
+      [t, o, h, l, cl, v] = c.map(Number);
     } else if (c && typeof c === 'object') {
-      close = +(c.c ?? c.close ?? c.closePrice ?? c.last ?? 0);
-    }
-    if (isFinite(close) && close > 0) return close;
+      t  = +(c.t  ?? c.time ?? c.timestamp ?? c.ts ?? 0);
+      o  = +(c.o  ?? c.open  ?? 0);
+      h  = +(c.h  ?? c.high  ?? 0);
+      l  = +(c.l  ?? c.low   ?? 0);
+      cl = +(c.c  ?? c.close ?? c.closePrice ?? c.last ?? 0);
+      v  = +(c.v  ?? c.volume ?? 0);
+    } else continue;
+    if (isFinite(cl) && cl > 0) out.push({ t, o, h, l, c: cl, v });
   }
-  return null;
+  return out;
+}
+
+function latestClose(arr) {
+  const n = normalizeCandles(arr);
+  return n.length ? n[n.length - 1].c : null;
 }
 
 // ---------- 估算公式 ----------
@@ -464,6 +659,25 @@ function renderEstimator() {
     ? '盘前 K-line 暂不可用'
     : '假设单位：USDT · 最新收盘';
 
+  // 预期盈亏大卡（按当前盘前价计算）
+  const pCard = $('profitCard');
+  if (price != null && r.spcx > 0) {
+    const revenue = price * r.spcx;
+    const profit = revenue - r.cost;
+    const roi = r.cost > 0 ? (profit / r.cost * 100) : 0;
+    pCard.classList.toggle('positive', profit >= 0);
+    pCard.classList.toggle('negative', profit < 0);
+    $('profitValue').textContent =
+      (profit >= 0 ? '+' : '') + fmtNum(profit, 2) + ' ' + r.pool +
+      '  (' + (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%)';
+    $('profitSub').textContent =
+      `预计 ${fmtNum(r.spcx, 4)} SPCX × 现价 ${price.toFixed(4)} = 收入 ${fmtNum(revenue, 2)} ${r.pool}`;
+  } else {
+    pCard.classList.remove('positive', 'negative');
+    $('profitValue').textContent = '—';
+    $('profitSub').textContent = price == null ? '盘前行情暂不可用' : '等待中签结果…';
+  }
+
   // 盈亏表
   const rows = buildPnl(r.spcx, r.cost, price);
   const body = $('pnlBody');
@@ -478,6 +692,84 @@ function renderEstimator() {
       <td class="${cls}">${row.roiPct >= 0 ? '+' : ''}${row.roiPct.toFixed(2)}%</td>
     </tr>`;
   }).join('');
+}
+
+state.chartRange = 240;
+
+function renderChart() {
+  const all = normalizeCandles(state.kline);
+  const svg = $('chart');
+  if (!all.length) {
+    svg.innerHTML = '<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">暂无盘前行情数据</text>';
+    ['cPrice','cOpen','cHigh','cLow','cCount'].forEach(id => $(id).textContent = '—');
+    $('cDelta').textContent = '';
+    return;
+  }
+  const n = Math.min(state.chartRange, all.length);
+  const data = all.slice(-n);
+  const W = 800, H = 220, pad = { l: 52, r: 8, t: 8, b: 18 };
+  const cs = data.map(x => x.c);
+  const hs = data.map(x => x.h || x.c);
+  const ls = data.map(x => x.l || x.c);
+  const lo = Math.min(...ls), hi = Math.max(...hs);
+  const span = Math.max(1e-9, hi - lo);
+  const y = (v) => pad.t + (H - pad.t - pad.b) * (1 - (v - lo) / span);
+  const x = (i) => pad.l + (W - pad.l - pad.r) * (data.length <= 1 ? 0.5 : i / (data.length - 1));
+
+  // 路径
+  const path = cs.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(2)}`).join(' ');
+  // 填充区
+  const fill = path + ` L${x(data.length - 1).toFixed(1)},${(H - pad.b).toFixed(1)} L${x(0).toFixed(1)},${(H - pad.b).toFixed(1)} Z`;
+
+  // Y 轴刻度：5 条
+  const ticks = [];
+  for (let i = 0; i <= 4; i++) {
+    const v = lo + (span * i / 4);
+    ticks.push({ v, y: y(v) });
+  }
+  // 590 参考线（下面会用到 refColor，先占位）
+
+  const first = data[0].c, last = data[data.length - 1].c;
+  const up = last >= first;
+  const styleMap = getComputedStyle(document.documentElement);
+  const color = up ? (styleMap.getPropertyValue('--c-success').trim() || '#059669')
+                   : (styleMap.getPropertyValue('--c-error').trim()   || '#dc2626');
+  const gridColor = styleMap.getPropertyValue('--c-border').trim() || '#e5e7eb';
+  const axisColor = styleMap.getPropertyValue('--c-sub').trim() || '#6b7280';
+  const refColor  = styleMap.getPropertyValue('--c-warn').trim() || '#f59e0b';
+
+  let ref590 = '';
+  if (590 >= lo && 590 <= hi) {
+    const yy = y(590).toFixed(1);
+    ref590 = `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke="${refColor}" stroke-dasharray="4 4" stroke-width="1"/>
+              <text x="${W - pad.r - 4}" y="${(+yy - 3).toFixed(1)}" fill="${refColor}" font-size="10" text-anchor="end">成本 590</text>`;
+  }
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${ticks.map(t => `<line x1="${pad.l}" x2="${W - pad.r}" y1="${t.y.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="${gridColor}" stroke-width="1"/>
+        <text x="${pad.l - 6}" y="${(t.y + 3).toFixed(1)}" fill="${axisColor}" font-size="10" text-anchor="end">${t.v.toFixed(4)}</text>`).join('')}
+    ${ref590}
+    <path d="${fill}" fill="url(#g)"/>
+    <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8"/>
+    <circle cx="${x(data.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="3.5" fill="${color}"/>
+  `;
+
+  const delta = last - first;
+  const pct = first > 0 ? (delta / first * 100) : 0;
+  $('cPrice').textContent = last.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+  const dEl = $('cDelta');
+  dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(4) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
+  dEl.className = 'delta ' + (delta >= 0 ? 'up' : 'down');
+  $('cOpen').textContent = data[0].o ? data[0].o.toFixed(4) : data[0].c.toFixed(4);
+  $('cHigh').textContent = hi.toFixed(4);
+  $('cLow').textContent = lo.toFixed(4);
+  $('cCount').textContent = String(data.length);
 }
 
 function renderSnapshotBar() {
@@ -503,6 +795,12 @@ function renderSnapshotBar() {
     `<span>综合认购比 <b>${(+d.subscription_ratio).toFixed(2)}x</b></span>`,
   ].join('');
   $('windowRemain').textContent = nowMs >= endMs ? '（认购已结束）' : `（剩余 ${hh}h ${mm}m）`;
+
+  const combined = +d.combined_progress_rate || 0;
+  const ratio = +d.subscription_ratio || 0;
+  $('progressBar').style.width = Math.min(100, combined) + '%';
+  $('progressPct').textContent = combined.toFixed(2) + '%';
+  $('progressRatio').textContent = ratio.toFixed(2) + 'x';
 }
 
 // ---------- tick 循环 ----------
@@ -530,6 +828,7 @@ async function tickAll() {
 
   renderSnapshotBar();
   renderEstimator();
+  renderChart();
 
   const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
   if (any) {
@@ -625,6 +924,41 @@ document.querySelectorAll('.quick-btns button').forEach(btn => {
     renderEstimator();
   });
 });
+
+document.querySelectorAll('.chart-range button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chart-range button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.chartRange = Number(btn.getAttribute('data-r')) || 240;
+    renderChart();
+  });
+});
+
+// 主题切换
+(function initTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem('gate-spcx-theme'); } catch {}
+  if (saved === 'light' || saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', saved);
+  }
+  $('themeBtn').addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme');
+    const sysDark = matchMedia('(prefers-color-scheme: dark)').matches;
+    // 循环: null -> 反系统 -> 反的反 -> null
+    let next;
+    if (!cur) next = sysDark ? 'light' : 'dark';
+    else if (cur === 'dark') next = 'light';
+    else next = null;
+    if (next) document.documentElement.setAttribute('data-theme', next);
+    else document.documentElement.removeAttribute('data-theme');
+    try {
+      if (next) localStorage.setItem('gate-spcx-theme', next);
+      else localStorage.removeItem('gate-spcx-theme');
+    } catch {}
+    // 重绘图表（颜色变量已变）
+    renderChart();
+  });
+})();
 
 restore();
 setHour(Number($('hour').value) || 0);
