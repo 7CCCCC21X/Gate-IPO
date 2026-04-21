@@ -218,6 +218,37 @@
     font-size:11px; padding:3px 10px; border-radius:999px; background:var(--c-primary-light);
     color:var(--c-primary); margin-left:10px; font-weight:600; vertical-align:middle; letter-spacing:.3px;
   }
+  /* 项目 hero */
+  .hero {
+    background:linear-gradient(135deg, var(--c-card) 0%, var(--c-card2) 100%);
+    border:1px solid var(--c-border); border-radius:20px; padding:22px 26px;
+    margin-bottom:16px; box-shadow:var(--shadow);
+    display:grid; grid-template-columns:auto 1fr auto; gap:24px; align-items:center;
+  }
+  .hero-icon {
+    width:56px; height:56px; border-radius:16px;
+    background:linear-gradient(135deg, var(--c-primary), #38bdf8);
+    color:#fff; display:flex; align-items:center; justify-content:center;
+    font-weight:800; font-size:18px; letter-spacing:.5px;
+    box-shadow:0 4px 14px rgba(0,102,255,.3);
+  }
+  .hero-main .hero-title { font-size:20px; font-weight:800; letter-spacing:-.3px; }
+  .hero-main .hero-title .badge { font-size:11px; padding:3px 10px; border-radius:999px;
+    background:var(--c-primary-light); color:var(--c-primary); margin-left:10px; font-weight:600; vertical-align:middle; }
+  .hero-main .hero-meta { font-size:12px; color:var(--c-sub); margin-top:6px; display:flex; flex-wrap:wrap; gap:14px; }
+  .hero-main .hero-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
+  .hero-price { text-align:right; }
+  .hero-price .lbl { font-size:11px; color:var(--c-sub); margin-bottom:4px; }
+  .hero-price .val { font-size:28px; font-weight:800; letter-spacing:-.5px; font-variant-numeric:tabular-nums; }
+  .hero-price .delta { display:inline-block; margin-top:4px; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
+  .hero-price .delta.up { background:var(--c-success-bg); color:var(--c-success); }
+  .hero-price .delta.down { background:var(--c-error-bg); color:var(--c-error); }
+  .hero-price .delta.flat { background:var(--c-card2); color:var(--c-sub); }
+  @media (max-width: 720px) {
+    .hero { grid-template-columns:auto 1fr; gap:14px; padding:18px; }
+    .hero-price { grid-column:1 / -1; text-align:left; padding-top:10px; border-top:1px solid var(--c-border); }
+    .hero-price .val { font-size:22px; }
+  }
   /* 主题切换 */
   .theme-toggle {
     background:transparent; color:var(--c-sub); border:1px solid var(--c-border);
@@ -237,17 +268,32 @@
 <body>
 <div class="page">
 
-<header>
-  <h1>Gate SpaceX 收益预估 <span class="badge">SPCX · Pre-IPO</span></h1>
-  <div style="display:flex;align-items:center;gap:10px">
-    <span id="statusBadge" class="status">
-      <span class="dot"></span>
-      <span id="statusText">等待首次加载…</span>
-      <span id="countdown"></span>
-    </span>
-    <button id="themeBtn" class="theme-toggle" title="切换主题">🌓</button>
+<div class="hero">
+  <div class="hero-icon">SPCX</div>
+  <div class="hero-main">
+    <div class="hero-title">Gate SpaceX Pre-IPO <span class="badge">收益预估</span></div>
+    <div class="hero-meta">
+      <span>隐含估值 <b id="heroVal">—</b></span>
+      <span>认购单价 <b id="heroPrice">590 USDT</b></span>
+      <span>综合超额 <b id="heroRatio">—</b></span>
+      <span id="heroRemain">剩余 —</span>
+    </div>
   </div>
-</header>
+  <div class="hero-price">
+    <div class="lbl">当前盘前价</div>
+    <div class="val" id="heroSpot">—</div>
+    <div id="heroDelta" class="delta flat">—</div>
+  </div>
+</div>
+
+<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
+  <span id="statusBadge" class="status">
+    <span class="dot"></span>
+    <span id="statusText">等待首次加载…</span>
+    <span id="countdown"></span>
+  </span>
+  <button id="themeBtn" class="theme-toggle" title="切换主题">🌓</button>
+</div>
 
 <div class="controls">
   <label>数据源
@@ -796,6 +842,32 @@ function renderChart() {
   $('cCount').textContent = String(data.length);
 }
 
+function renderHero() {
+  const d = state.api && state.api.data;
+  if (d) {
+    $('heroVal').textContent = fmtUSD(d.implied_valuation);
+    const usdt = (d.products || []).find(p => p.coin === 'USDT');
+    $('heroPrice').textContent = (usdt ? usdt.price : 590) + ' USDT';
+    $('heroRatio').textContent = (+d.subscription_ratio || 0).toFixed(2) + 'x';
+    const endMs = (d.end_time || 0) * 1000;
+    const remH = Math.max(0, (endMs - Date.now()) / 3_600_000);
+    if (Date.now() >= endMs) $('heroRemain').textContent = '认购已结束';
+    else $('heroRemain').textContent = `剩余 ${Math.floor(remH)}h ${Math.floor((remH%1)*60)}m`;
+  }
+
+  const candles = normalizeCandles(state.kline);
+  if (candles.length) {
+    const last = candles[candles.length - 1].c;
+    const first = candles[0].c;
+    const delta = last - first;
+    const pct = first > 0 ? (delta / first * 100) : 0;
+    $('heroSpot').textContent = last.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+    const dEl = $('heroDelta');
+    dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
+    dEl.className = 'delta ' + (Math.abs(delta) < 1e-6 ? 'flat' : (delta >= 0 ? 'up' : 'down'));
+  }
+}
+
 function renderSnapshotBar() {
   if (!state.api) { $('snapshotBar').textContent = '加载中…'; return; }
   const d = state.api.data;
@@ -850,6 +922,7 @@ async function tickAll() {
     any = true;
   }
 
+  renderHero();
   renderSnapshotBar();
   renderEstimator();
   renderChart();
