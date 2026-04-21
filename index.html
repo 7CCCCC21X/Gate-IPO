@@ -396,9 +396,24 @@
   .chart-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
   .chart-wrap {
     background:var(--c-card2); border:1.5px solid var(--c-border);
-    border-radius:var(--radius); padding:10px;
+    border-radius:var(--radius); padding:10px; position:relative;
   }
-  svg#chart { width:100%; height:240px; display:block; }
+  svg#chart { width:100%; height:240px; display:block; cursor:crosshair; }
+  .chart-tooltip {
+    position:absolute; pointer-events:none; z-index:10;
+    background:var(--c-card); border:1.5px solid var(--c-border);
+    border-radius:10px; padding:10px 12px; box-shadow:var(--shadow);
+    font-size:12px; color:var(--c-text); min-width:140px; display:none;
+    font-variant-numeric:tabular-nums;
+  }
+  .chart-tooltip .tt-time { color:var(--c-sub); font-size:10px; margin-bottom:6px; }
+  .chart-tooltip .tt-price { font-size:15px; font-weight:800; letter-spacing:-.3px; margin-bottom:4px; }
+  .chart-tooltip .tt-row { display:flex; justify-content:space-between; gap:10px; line-height:1.6; }
+  .chart-tooltip .tt-row .k { color:var(--c-sub); font-size:11px; }
+  .chart-tooltip .tt-row .v { font-weight:700; font-size:11px; }
+  .chart-tooltip .tt-row .v.pos { color:var(--c-success); }
+  .chart-tooltip .tt-row .v.neg { color:var(--c-error); }
+  .chart-tooltip hr { border:0; border-top:1px dashed var(--c-border); margin:6px 0; }
   .chart-range { display:flex; gap:6px; justify-content:flex-end; margin-top:10px; }
   .chart-range button {
     background:transparent; color:var(--c-sub); border:1.5px solid var(--c-border);
@@ -755,7 +770,8 @@
     </div>
   </div>
   <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
+    <svg id="chart" viewBox="0 0 800 240" preserveAspectRatio="none"></svg>
+    <div class="chart-tooltip" id="chartTooltip"></div>
   </div>
   <div class="chart-range">
     <button data-r="60" data-i18n="chart.r1h">近 1h</button>
@@ -855,6 +871,10 @@ const I18N = {
     'chart.rAll': '全部',
     'chart.empty': '暂无盘前行情数据',
     'chart.refLine': '成本 590',
+    'chart.tt.price': '价格',
+    'chart.tt.change': '相对首根',
+    'chart.tt.vsCost': '相对成本 590',
+    'chart.tt.profit': '当时预估盈亏',
     'common.loading': '加载中…',
     'footer.telegram': '加入交流群',
     'footer.source': '数据来自 Gate Launchpad 与 Sintral · 仅供参考',
@@ -944,6 +964,10 @@ const I18N = {
     'chart.rAll': 'All',
     'chart.empty': 'No pre-market data yet',
     'chart.refLine': 'Cost 590',
+    'chart.tt.price': 'Price',
+    'chart.tt.change': 'Since first',
+    'chart.tt.vsCost': 'vs cost 590',
+    'chart.tt.profit': 'Est. P&L at this price',
     'common.loading': 'Loading…',
     'footer.telegram': 'Join Community',
     'footer.source': 'Data from Gate Launchpad & Sintral · For reference only',
@@ -1406,6 +1430,9 @@ function renderEstimator() {
 
 state.chartRange = 240;
 
+const CHART_REF_COST = 590;
+state.chartGeom = null;  // 坐标映射与数据，tooltip 用
+
 function renderChart() {
   const all = normalizeCandles(state.kline);
   const svg = $('chart');
@@ -1413,63 +1440,81 @@ function renderChart() {
     svg.innerHTML = `<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">${t('chart.empty')}</text>`;
     ['cPrice','cOpen','cHigh','cLow'].forEach(id => $(id).textContent = '—');
     $('cDelta').textContent = '';
+    state.chartGeom = null;
     return;
   }
-  const n = Math.min(state.chartRange, all.length);
-  const data = all.slice(-n);
-  const W = 800, H = 220, pad = { l: 52, r: 8, t: 8, b: 18 };
+  const nBars = Math.min(state.chartRange, all.length);
+  const data = all.slice(-nBars);
+  const W = 800, H = 220, pad = { l: 52, r: 14, t: 10, b: 18 };
   const cs = data.map(x => x.c);
   const hs = data.map(x => x.h || x.c);
   const ls = data.map(x => x.l || x.c);
-  const lo = Math.min(...ls), hi = Math.max(...hs);
+  let lo = Math.min(...ls), hi = Math.max(...hs);
+  // 始终把成本线包含进 y 轴范围
+  lo = Math.min(lo, CHART_REF_COST);
+  hi = Math.max(hi, CHART_REF_COST);
+  // 上下各留 5% padding 避免贴边
+  const span0 = Math.max(1e-9, hi - lo);
+  lo -= span0 * 0.05; hi += span0 * 0.05;
   const span = Math.max(1e-9, hi - lo);
   const y = (v) => pad.t + (H - pad.t - pad.b) * (1 - (v - lo) / span);
   const x = (i) => pad.l + (W - pad.l - pad.r) * (data.length <= 1 ? 0.5 : i / (data.length - 1));
 
-  // 路径
   const path = cs.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(2)}`).join(' ');
-  // 填充区
   const fill = path + ` L${x(data.length - 1).toFixed(1)},${(H - pad.b).toFixed(1)} L${x(0).toFixed(1)},${(H - pad.b).toFixed(1)} Z`;
 
-  // Y 轴刻度：5 条
   const ticks = [];
   for (let i = 0; i <= 4; i++) {
     const v = lo + (span * i / 4);
     ticks.push({ v, y: y(v) });
   }
-  // 590 参考线（下面会用到 refColor，先占位）
 
   const first = data[0].c, last = data[data.length - 1].c;
   const up = last >= first;
-  const styleMap = getComputedStyle(document.documentElement);
-  const color = up ? (styleMap.getPropertyValue('--c-success').trim() || '#059669')
-                   : (styleMap.getPropertyValue('--c-error').trim()   || '#dc2626');
-  const gridColor = styleMap.getPropertyValue('--c-border').trim() || '#e5e7eb';
-  const axisColor = styleMap.getPropertyValue('--c-sub').trim() || '#6b7280';
-  const refColor  = styleMap.getPropertyValue('--c-warn').trim() || '#f59e0b';
+  const css = getComputedStyle(document.documentElement);
+  const color     = up ? (css.getPropertyValue('--c-success').trim() || '#059669')
+                       : (css.getPropertyValue('--c-error').trim()   || '#dc2626');
+  const gridColor = css.getPropertyValue('--c-border').trim() || '#e5e7eb';
+  const axisColor = css.getPropertyValue('--c-sub').trim() || '#6b7280';
+  const costColor = css.getPropertyValue('--c-warn').trim() || '#f59e0b';
+  const nowColor  = css.getPropertyValue('--c-primary').trim() || '#0066ff';
 
-  let ref590 = '';
-  if (590 >= lo && 590 <= hi) {
-    const yy = y(590).toFixed(1);
-    ref590 = `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke="${refColor}" stroke-dasharray="4 4" stroke-width="1"/>
-              <text x="${W - pad.r - 4}" y="${(+yy - 3).toFixed(1)}" fill="${refColor}" font-size="10" text-anchor="end">${t('chart.refLine')}</text>`;
-  }
+  const yCost = y(CHART_REF_COST);
+  const yNow  = y(last);
+
+  // 成本线（始终显示） + 当前价参考线
+  const refLines = `
+    <line x1="${pad.l}" x2="${W - pad.r}" y1="${yCost.toFixed(1)}" y2="${yCost.toFixed(1)}"
+          stroke="${costColor}" stroke-dasharray="5 4" stroke-width="1.2"/>
+    <rect x="${W - pad.r - 50}" y="${(yCost - 8).toFixed(1)}" width="50" height="13" rx="3" fill="${costColor}"/>
+    <text x="${W - pad.r - 25}" y="${(yCost + 1.5).toFixed(1)}" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">成本 590</text>
+
+    <line x1="${pad.l}" x2="${W - pad.r}" y1="${yNow.toFixed(1)}" y2="${yNow.toFixed(1)}"
+          stroke="${nowColor}" stroke-dasharray="2 3" stroke-width="1" opacity="0.6"/>
+    <rect x="${pad.l - 50}" y="${(yNow - 8).toFixed(1)}" width="48" height="13" rx="3" fill="${nowColor}" opacity="0.85"/>
+    <text x="${pad.l - 26}" y="${(yNow + 1.5).toFixed(1)}" fill="#fff" font-size="10" font-weight="700" text-anchor="middle">${last.toFixed(2)}</text>
+  `;
 
   svg.innerHTML = `
     <defs>
       <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${color}" stop-opacity="0.35"/>
+        <stop offset="0%"  stop-color="${color}" stop-opacity="0.35"/>
         <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
       </linearGradient>
     </defs>
-    ${ticks.map(t => `<line x1="${pad.l}" x2="${W - pad.r}" y1="${t.y.toFixed(1)}" y2="${t.y.toFixed(1)}" stroke="${gridColor}" stroke-width="1"/>
-        <text x="${pad.l - 6}" y="${(t.y + 3).toFixed(1)}" fill="${axisColor}" font-size="10" text-anchor="end">${t.v.toFixed(4)}</text>`).join('')}
-    ${ref590}
+    ${ticks.map(tk => `<line x1="${pad.l}" x2="${W - pad.r}" y1="${tk.y.toFixed(1)}" y2="${tk.y.toFixed(1)}" stroke="${gridColor}" stroke-width="1"/>
+        <text x="${pad.l - 6}" y="${(tk.y + 3).toFixed(1)}" fill="${axisColor}" font-size="10" text-anchor="end">${tk.v.toFixed(4)}</text>`).join('')}
+    ${refLines}
     <path d="${fill}" fill="url(#g)"/>
     <path d="${path}" fill="none" stroke="${color}" stroke-width="1.8"/>
     <circle cx="${x(data.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="3.5" fill="${color}"/>
+    <g id="cursor" style="pointer-events:none;display:none">
+      <line id="cursorLine" y1="${pad.t}" y2="${H - pad.b}" stroke="${axisColor}" stroke-dasharray="3 3" stroke-width="1" opacity="0.6"/>
+      <circle id="cursorDot" r="4" fill="${color}" stroke="#fff" stroke-width="1.5"/>
+    </g>
   `;
 
+  // 头部元信息
   const delta = last - first;
   const pct = first > 0 ? (delta / first * 100) : 0;
   $('cPrice').textContent = last.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 6 });
@@ -1477,8 +1522,11 @@ function renderChart() {
   dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(4) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
   dEl.className = 'delta ' + (delta >= 0 ? 'up' : 'down');
   $('cOpen').textContent = data[0].o ? data[0].o.toFixed(4) : data[0].c.toFixed(4);
-  $('cHigh').textContent = hi.toFixed(4);
-  $('cLow').textContent = lo.toFixed(4);
+  $('cHigh').textContent = Math.max(...hs).toFixed(4);
+  $('cLow').textContent  = Math.min(...ls).toFixed(4);
+
+  // 保存几何，供 tooltip 查最近点
+  state.chartGeom = { data, W, H, pad, lo, hi, span, first, last };
 }
 
 function renderHero() {
@@ -1691,6 +1739,93 @@ document.querySelectorAll('.chart-range button').forEach(btn => {
     } catch {}
     renderChart();
   });
+})();
+
+// 图表 tooltip
+(function initChartTooltip() {
+  const svg = document.getElementById('chart');
+  const tip = document.getElementById('chartTooltip');
+  const wrap = svg && svg.parentElement;
+  if (!svg || !tip || !wrap) return;
+
+  function handleMove(evt) {
+    const g = state.chartGeom;
+    if (!g || !g.data.length) return;
+    const rect = svg.getBoundingClientRect();
+    const clientX = evt.clientX ?? (evt.touches && evt.touches[0] && evt.touches[0].clientX);
+    const clientY = evt.clientY ?? (evt.touches && evt.touches[0] && evt.touches[0].clientY);
+    if (clientX == null) return;
+    // 映射客户端坐标到 viewBox 坐标
+    const xv = (clientX - rect.left) / rect.width * g.W;
+    if (xv < g.pad.l || xv > g.W - g.pad.r) { hideTip(); return; }
+    // 找最近的数据点
+    const t = (xv - g.pad.l) / (g.W - g.pad.l - g.pad.r);
+    const idx = Math.max(0, Math.min(g.data.length - 1, Math.round(t * (g.data.length - 1))));
+    const c = g.data[idx];
+    // 画 cursor
+    const cursor = svg.querySelector('#cursor');
+    const line = svg.querySelector('#cursorLine');
+    const dot = svg.querySelector('#cursorDot');
+    if (cursor && line && dot) {
+      const cx = g.pad.l + (g.W - g.pad.l - g.pad.r) * (g.data.length <= 1 ? 0.5 : idx / (g.data.length - 1));
+      const cy = g.pad.t + (g.H - g.pad.t - g.pad.b) * (1 - (c.c - g.lo) / g.span);
+      cursor.style.display = '';
+      line.setAttribute('x1', cx.toFixed(1));
+      line.setAttribute('x2', cx.toFixed(1));
+      dot.setAttribute('cx', cx.toFixed(1));
+      dot.setAttribute('cy', cy.toFixed(1));
+    }
+    // 构造 tooltip 内容
+    const time = c.t ? new Date(c.t).toLocaleString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false, month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    const ch = c.c - g.first;
+    const chPct = g.first > 0 ? (ch / g.first * 100) : 0;
+    const vsCost = c.c - 590;
+    const vsCostPct = (vsCost / 590) * 100;
+    // 当时预估盈亏 = 此价 × 当前 SPCX − 实际消耗
+    let profitHtml = '';
+    if (state.api) {
+      const inputs = readInputs();
+      const r = estimate(state.api, inputs);
+      if (r.spcx > 0) {
+        const profit = c.c * r.spcx - r.actualCost;
+        const roi = r.lockup > 0 ? (profit / r.lockup * 100) : 0;
+        const cls = profit >= 0 ? 'pos' : 'neg';
+        profitHtml = `<hr><div class="tt-row"><span class="k">${t_('chart.tt.profit')}</span><span class="v ${cls}">${profit >= 0 ? '+' : ''}${fmtNum(profit, 2)} ${r.pool}</span></div>` +
+                     `<div class="tt-row"><span class="k">ROI</span><span class="v ${cls}">${roi >= 0 ? '+' : ''}${roi.toFixed(3)}%</span></div>`;
+      }
+    }
+    const chCls = ch >= 0 ? 'pos' : 'neg';
+    const vcCls = vsCost >= 0 ? 'pos' : 'neg';
+    tip.innerHTML =
+      `<div class="tt-time">${time}</div>` +
+      `<div class="tt-price">${c.c.toFixed(4)}</div>` +
+      `<div class="tt-row"><span class="k">${t_('chart.tt.change')}</span><span class="v ${chCls}">${ch >= 0 ? '+' : ''}${ch.toFixed(4)} (${chPct >= 0 ? '+' : ''}${chPct.toFixed(2)}%)</span></div>` +
+      `<div class="tt-row"><span class="k">${t_('chart.tt.vsCost')}</span><span class="v ${vcCls}">${vsCost >= 0 ? '+' : ''}${vsCost.toFixed(2)} (${vsCostPct >= 0 ? '+' : ''}${vsCostPct.toFixed(2)}%)</span></div>` +
+      profitHtml;
+    // 定位 tooltip（相对 wrap）
+    tip.style.display = 'block';
+    const wrect = wrap.getBoundingClientRect();
+    const localX = clientX - wrect.left;
+    const localY = clientY - wrect.top;
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = localX + 14, top = localY - th - 10;
+    if (left + tw > wrap.clientWidth - 4) left = localX - tw - 14;
+    if (top < 4) top = localY + 14;
+    tip.style.left = left + 'px';
+    tip.style.top  = top + 'px';
+  }
+  function hideTip() {
+    tip.style.display = 'none';
+    const cursor = svg.querySelector('#cursor');
+    if (cursor) cursor.style.display = 'none';
+  }
+  // 用 t_ 做一个可空的 i18n 备用（避免与局部变量 t 碰撞）
+  function t_(k) { return (typeof t === 'function' ? t(k) : k); }
+  window.__tchart = t_;
+  svg.addEventListener('mousemove', handleMove);
+  svg.addEventListener('mouseleave', hideTip);
+  svg.addEventListener('touchmove', (e) => { handleMove(e); e.preventDefault(); }, { passive: false });
+  svg.addEventListener('touchend', hideTip);
 })();
 
 // i18n 初始化和切换
