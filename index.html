@@ -170,6 +170,7 @@
       <option value="local">本地代理 /api/ipo</option>
       <option value="corsproxy">corsproxy.io</option>
       <option value="allorigins">allorigins.win</option>
+      <option value="codetabs">codetabs.com</option>
       <option value="direct">直连（多半会被 CORS 拦截）</option>
     </select>
   </label>
@@ -195,8 +196,9 @@ const UPSTREAM = (pid) =>
 
 const SOURCES = {
   local: (pid) => `/api/ipo?project_id=${pid}`,
-  corsproxy: (pid) => `https://corsproxy.io/?` + encodeURIComponent(UPSTREAM(pid)),
+  corsproxy: (pid) => `https://corsproxy.io/?url=` + encodeURIComponent(UPSTREAM(pid)),
   allorigins: (pid) => `https://api.allorigins.win/raw?url=` + encodeURIComponent(UPSTREAM(pid)),
+  codetabs: (pid) => `https://api.codetabs.com/v1/proxy/?quest=` + encodeURIComponent(UPSTREAM(pid)),
   direct: (pid) => UPSTREAM(pid),
 };
 
@@ -349,10 +351,10 @@ async function fetchOnce() {
   const order =
     state.src === 'auto'
       ? (state.workingSrc
-          ? [state.workingSrc, 'corsproxy', 'allorigins', 'local', 'direct']
+          ? [state.workingSrc, 'local', 'corsproxy', 'allorigins', 'codetabs', 'direct']
           : (location.protocol === 'file:'
-              ? ['corsproxy', 'allorigins', 'direct']
-              : ['local', 'corsproxy', 'allorigins', 'direct']))
+              ? ['corsproxy', 'allorigins', 'codetabs', 'direct']
+              : ['local', 'corsproxy', 'allorigins', 'codetabs', 'direct']))
       : [state.src];
 
   const seen = new Set();
