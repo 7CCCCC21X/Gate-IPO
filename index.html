@@ -338,33 +338,67 @@
   /* 项目 hero */
   .hero {
     background:linear-gradient(135deg, var(--c-card) 0%, var(--c-card2) 100%);
-    border:1px solid var(--c-border); border-radius:20px; padding:22px 26px;
+    border:1px solid var(--c-border); border-radius:20px; padding:24px 28px;
     margin-bottom:16px; box-shadow:var(--shadow);
-    display:grid; grid-template-columns:auto 1fr auto; gap:24px; align-items:center;
   }
+  .hero-top {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:20px;
+    flex-wrap:wrap;
+  }
+  .hero-brand { display:flex; align-items:center; gap:14px; }
   .hero-icon {
-    width:56px; height:56px; border-radius:16px;
+    width:52px; height:52px; border-radius:14px;
     background:linear-gradient(135deg, var(--c-primary), #38bdf8);
     color:#fff; display:flex; align-items:center; justify-content:center;
-    font-weight:800; font-size:18px; letter-spacing:.5px;
-    box-shadow:0 4px 14px rgba(0,102,255,.3);
+    font-weight:800; font-size:15px; letter-spacing:.5px;
+    box-shadow:0 4px 14px rgba(0,102,255,.3); flex-shrink:0;
   }
-  .hero-main .hero-title { font-size:20px; font-weight:800; letter-spacing:-.3px; }
-  .hero-main .hero-title .badge { font-size:11px; padding:3px 10px; border-radius:999px;
-    background:var(--c-primary-light); color:var(--c-primary); margin-left:10px; font-weight:600; vertical-align:middle; }
-  .hero-main .hero-meta { font-size:12px; color:var(--c-sub); margin-top:6px; display:flex; flex-wrap:wrap; gap:14px; }
-  .hero-main .hero-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; }
-  .hero-price { text-align:right; }
-  .hero-price .lbl { font-size:11px; color:var(--c-sub); margin-bottom:4px; }
-  .hero-price .val { font-size:28px; font-weight:800; letter-spacing:-.5px; font-variant-numeric:tabular-nums; }
-  .hero-price .delta { display:inline-block; margin-top:4px; font-size:12px; font-weight:700; padding:3px 10px; border-radius:999px; }
-  .hero-price .delta.up { background:var(--c-success-bg); color:var(--c-success); }
-  .hero-price .delta.down { background:var(--c-error-bg); color:var(--c-error); }
-  .hero-price .delta.flat { background:var(--c-card2); color:var(--c-sub); }
-  @media (max-width: 720px) {
-    .hero { grid-template-columns:auto 1fr; gap:14px; padding:18px; }
-    .hero-price { grid-column:1 / -1; text-align:left; padding-top:10px; border-top:1px solid var(--c-border); }
-    .hero-price .val { font-size:22px; }
+  .hero-title-wrap { min-width:0; }
+  .hero-title { font-size:22px; font-weight:800; letter-spacing:-.3px; line-height:1.2; }
+  .hero-subtitle { margin-top:6px; }
+  .hero-subtitle .badge {
+    font-size:11px; padding:3px 10px; border-radius:999px;
+    background:var(--c-primary-light); color:var(--c-primary); font-weight:600;
+  }
+  /* 价格区 */
+  .hero-price-block { text-align:right; min-width:0; }
+  .hero-price-block .lbl { font-size:11px; color:var(--c-sub); margin-bottom:4px; }
+  .hero-price-row { display:flex; align-items:baseline; gap:10px; justify-content:flex-end; flex-wrap:wrap; }
+  .hero-price-row .val {
+    font-size:30px; font-weight:800; letter-spacing:-.5px;
+    font-variant-numeric:tabular-nums; line-height:1.1;
+  }
+  .hero-price-row .delta {
+    font-size:13px; font-weight:700; padding:3px 10px; border-radius:999px;
+    white-space:nowrap;
+  }
+  .hero-price-row .delta.up   { background:var(--c-success-bg); color:var(--c-success); }
+  .hero-price-row .delta.down { background:var(--c-error-bg);   color:var(--c-error); }
+  .hero-price-row .delta.flat { background:var(--c-card2);      color:var(--c-sub); }
+  /* 标签条 */
+  .hero-tags {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:18px;
+    padding-top:16px; border-top:1px solid var(--c-border);
+  }
+  .hero-tags .tag {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:6px 12px; border-radius:999px;
+    background:var(--c-card2); border:1px solid var(--c-border);
+    font-size:12px; color:var(--c-sub);
+  }
+  .hero-tags .tag b {
+    color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums;
+  }
+  @media (max-width: 640px) {
+    .hero { padding:18px; }
+    .hero-top { gap:14px; }
+    .hero-price-block { text-align:left; flex:1; }
+    .hero-price-row { justify-content:flex-start; }
+    .hero-price-row .val { font-size:26px; }
+    .hero-title { font-size:18px; }
+    .hero-icon { width:44px; height:44px; font-size:13px; border-radius:12px; }
+    .hero-tags { gap:6px; margin-top:14px; padding-top:12px; }
+    .hero-tags .tag { padding:5px 10px; font-size:11px; }
   }
   /* 主题切换 */
   .theme-toggle {
@@ -441,20 +475,27 @@
 </div>
 
 <div class="hero">
-  <div class="hero-icon">SPCX</div>
-  <div class="hero-main">
-    <div class="hero-title"><span data-i18n="hero.title">Gate SpaceX Pre-IPO</span> <span class="badge" data-i18n="hero.badge">收益预估</span></div>
-    <div class="hero-meta">
-      <span><span data-i18n="hero.valuation">隐含估值</span> <b id="heroVal" class="skeleton">$0.00T</b></span>
-      <span><span data-i18n="hero.price">认购单价</span> <b id="heroPrice">590 USDT</b></span>
-      <span><span data-i18n="hero.oversub">综合超额</span> <b id="heroRatio" class="skeleton">0.00x</b></span>
-      <span id="heroRemain" class="skeleton">— —</span>
+  <div class="hero-top">
+    <div class="hero-brand">
+      <div class="hero-icon">SPCX</div>
+      <div class="hero-title-wrap">
+        <div class="hero-title"><span data-i18n="hero.title">Gate SpaceX Pre-IPO</span></div>
+        <div class="hero-subtitle"><span class="badge" data-i18n="hero.badge">收益预估</span></div>
+      </div>
+    </div>
+    <div class="hero-price-block">
+      <div class="lbl" data-i18n="hero.spot">当前盘前价</div>
+      <div class="hero-price-row">
+        <div class="val skeleton" id="heroSpot">000.0000</div>
+        <div id="heroDelta" class="delta flat">—</div>
+      </div>
     </div>
   </div>
-  <div class="hero-price">
-    <div class="lbl" data-i18n="hero.spot">当前盘前价</div>
-    <div class="val skeleton" id="heroSpot">000.0000</div>
-    <div id="heroDelta" class="delta flat">—</div>
+  <div class="hero-tags">
+    <span class="tag"><span data-i18n="hero.valuation">隐含估值</span> <b id="heroVal" class="skeleton">$0.00T</b></span>
+    <span class="tag"><span data-i18n="hero.price">成本价</span> <b id="heroPrice">590 USDT</b></span>
+    <span class="tag"><span data-i18n="hero.oversub">综合超募</span> <b id="heroRatio" class="skeleton">0.00x</b></span>
+    <span class="tag" id="heroRemainTag"><span data-i18n="hero.remainLabel">剩余</span> <b id="heroRemain" class="skeleton">— —</b></span>
   </div>
 </div>
 
@@ -590,12 +631,13 @@ const I18N = {
     'hero.title': 'Gate SpaceX Pre-IPO',
     'hero.badge': '收益预估',
     'hero.valuation': '隐含估值',
-    'hero.price': '认购单价',
-    'hero.oversub': '综合超额',
     'hero.spot': '当前盘前价',
     'hero.remainSuffix': '后开始',
-    'hero.remain': '剩余 {h}h {m}m',
-    'hero.ended': '认购已结束',
+    'hero.remain': '{h}h {m}m',
+    'hero.remainLabel': '剩余',
+    'hero.ended': '已结束',
+    'hero.price': '成本价',
+    'hero.oversub': '综合超募',
     'snapshot.title': '当前池子快照',
     'snapshot.windowProgress': '认购窗口进度',
     'snapshot.remaining': '剩余',
@@ -671,8 +713,9 @@ const I18N = {
     'hero.price': 'Issue Price',
     'hero.oversub': 'Oversubscribed',
     'hero.spot': 'Current Pre-Market Price',
-    'hero.remain': '{h}h {m}m left',
-    'hero.ended': 'Subscription ended',
+    'hero.remain': '{h}h {m}m',
+    'hero.remainLabel': 'Remaining',
+    'hero.ended': 'Ended',
     'snapshot.title': 'Pool Snapshot',
     'snapshot.windowProgress': 'Subscription Window Progress',
     'snapshot.remaining': 'Remaining',
