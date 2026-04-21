@@ -618,7 +618,7 @@
     background:var(--c-card2); border:1.5px solid var(--c-border);
     border-radius:var(--radius); padding:10px; position:relative;
   }
-  svg#chart { width:100%; height:240px; display:block; cursor:crosshair; }
+  svg#chart { width:100%; height:320px; display:block; cursor:crosshair; }
   .chart-tooltip {
     position:absolute; pointer-events:none; z-index:10;
     background:var(--c-card); border:1.5px solid var(--c-border);
@@ -643,7 +643,8 @@
   .chart-range button:hover { border-color:var(--c-primary); color:var(--c-primary); }
   .chart-range button.active { background:var(--c-primary); color:#fff; border-color:var(--c-primary); }
   /* 页面容器 */
-  .page { max-width:960px; margin:0 auto; padding:24px 20px; }
+  .page { max-width:1200px; margin:0 auto; padding:24px 28px; }
+  @media (max-width: 1280px) { .page { max-width:100%; padding:22px 28px; } }
   h1 .badge {
     font-size:11px; padding:3px 10px; border-radius:999px; background:var(--c-primary-light);
     color:var(--c-primary); margin-left:10px; font-weight:600; vertical-align:middle; letter-spacing:.3px;
@@ -757,7 +758,7 @@
     .snapshot-bar { padding:12px 14px; gap:12px; font-size:12px; }
     .chart-price { font-size:22px; }
     .chart-meta { font-size:11px; gap:10px; }
-    svg#chart { height:200px; }
+    svg#chart { height:240px; }
     h1 { font-size:18px; }
     h3 { font-size:12px; }
     table.pnl th, table.pnl td { padding:8px 10px; font-size:12px; }
@@ -1101,7 +1102,7 @@
     </div>
   </div>
   <div class="chart-wrap">
-    <svg id="chart" viewBox="0 0 800 240" preserveAspectRatio="none"></svg>
+    <svg id="chart" viewBox="0 0 800 320" preserveAspectRatio="none"></svg>
     <div class="chart-tooltip" id="chartTooltip"></div>
   </div>
   <div class="chart-range">
@@ -1874,7 +1875,7 @@ function renderChart() {
   const all = normalizeCandles(state.kline);
   const svg = $('chart');
   if (!all.length) {
-    svg.innerHTML = `<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">${t('chart.empty')}</text>`;
+    svg.innerHTML = `<text x="400" y="160" fill="#8a92a6" text-anchor="middle" font-size="13">${t('chart.empty')}</text>`;
     ['cPrice','cOpen','cHigh','cLow'].forEach(id => $(id).textContent = '—');
     $('cDelta').textContent = '';
     state.chartGeom = null;
@@ -1882,7 +1883,7 @@ function renderChart() {
   }
   const nBars = Math.min(state.chartRange, all.length);
   const data = all.slice(-nBars);
-  const W = 800, H = 220, pad = { l: 52, r: 14, t: 10, b: 18 };
+  const W = 800, H = 320, pad = { l: 52, r: 14, t: 10, b: 18 };
   const cs = data.map(x => x.c);
   const hs = data.map(x => x.h || x.c);
   const ls = data.map(x => x.l || x.c);
