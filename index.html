@@ -264,12 +264,41 @@
     display:inline-flex; align-items:center; justify-content:center; transition:all .15s;
   }
   .theme-toggle:hover { border-color:var(--c-primary); color:var(--c-primary); }
+  /* 表格在小屏可横滑 */
+  .table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:var(--radius); }
+  .table-wrap table.pnl { min-width:540px; }
   @media (max-width: 640px) {
-    .page { padding:16px 12px; }
-    .card { padding:18px; border-radius:16px; }
+    .page { padding:14px 10px; }
+    .card { padding:16px 14px; border-radius:14px; }
+    .hero { padding:16px; gap:12px; }
+    .hero-icon { width:44px; height:44px; font-size:14px; border-radius:12px; }
+    .hero-main .hero-title { font-size:16px; }
+    .hero-main .hero-meta { font-size:11px; gap:10px; }
+    .hero-price .val { font-size:20px; }
+    .profit-card { padding:16px; }
+    .profit-card .profit-value { font-size:22px; }
+    .profit-card .profit-sub { font-size:11px; }
+    .form-grid { gap:10px; }
+    .result-grid { gap:10px; }
+    .result-grid .card { padding:12px; }
+    .result-grid .card .value { font-size:16px; }
+    .field input[type="number"] { padding:10px 12px; font-size:14px; }
+    .radio-row { gap:6px; }
+    .radio-row label { min-width:0; padding:9px 12px; font-size:13px; }
+    .quick-btns button { padding:5px 10px; font-size:11px; }
+    .controls { gap:6px; font-size:12px; }
+    .controls input, .controls select { padding:5px 8px; font-size:12px; }
+    .controls button { padding:6px 12px; font-size:12px; }
+    .snapshot-bar { padding:12px 14px; gap:12px; font-size:12px; }
+    .chart-price { font-size:22px; }
+    .chart-meta { font-size:11px; gap:10px; }
+    svg#chart { height:200px; }
     h1 { font-size:18px; }
-    .profit-card .profit-value { font-size:24px; }
-    .radio-row label { min-width:0; }
+    h3 { font-size:12px; }
+    table.pnl th, table.pnl td { padding:8px 10px; font-size:12px; }
+  }
+  @media (max-width: 400px) {
+    .hero-main .hero-meta span:nth-child(n+3) { display:none; }
   }
 </style>
 </head>
@@ -370,17 +399,19 @@
   </div>
 
   <h3>盈亏表 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
-  <table class="pnl" id="pnlTable">
-    <thead><tr>
-      <th>退出价</th>
-      <th>价格 (USDT)</th>
-      <th>收入</th>
-      <th>盈亏</th>
-      <th title="相对实际消耗成本的涨跌">币价 ROI</th>
-      <th title="相对锁仓资金的回报率">锁仓 ROI</th>
-    </tr></thead>
-    <tbody id="pnlBody"></tbody>
-  </table>
+  <div class="table-wrap">
+    <table class="pnl" id="pnlTable">
+      <thead><tr>
+        <th>退出价</th>
+        <th>价格 (USDT)</th>
+        <th>收入</th>
+        <th>盈亏</th>
+        <th title="相对实际消耗成本的涨跌">币价 ROI</th>
+        <th title="相对锁仓资金的回报率">锁仓 ROI</th>
+      </tr></thead>
+      <tbody id="pnlBody"></tbody>
+    </table>
+  </div>
 </section>
 
 <section class="card" id="chartCard">
