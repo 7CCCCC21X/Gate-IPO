@@ -247,6 +247,10 @@
   }
   .price-card input[type="number"]:focus { color:var(--c-primary); }
   .price-card.manual input[type="number"] { color:var(--c-warn); }
+  .price-card .price-hint {
+    font-size:10px; color:var(--c-sub); margin-bottom:6px;
+    line-height:1.4;
+  }
   .link-btn {
     background:none; border:none; color:var(--c-primary); cursor:pointer;
     font-size:11px; font-weight:600; padding:0; text-decoration:underline;
@@ -767,6 +771,7 @@
         <button type="button" id="resetPriceBtn" class="link-btn" data-i18n="result.resetPrice">重置实时价</button>
       </div>
       <input id="r-price" type="number" step="0.01" min="0" placeholder="—" />
+      <div class="price-hint" data-i18n="result.priceHint">💡 可手动修改，模拟不同退出价格的盈亏</div>
       <div class="sub" id="r-price-sub">
         <a href="https://web3.binance.com/zh-CN/token/sol/PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh?ref=XIAOCC"
            target="_blank" rel="noopener" class="binance-link">
@@ -979,6 +984,7 @@ const I18N = {
     'result.spotNoData': '盘前 K-line 暂不可用',
     'result.resetPrice': '重置实时价',
     'result.binanceRef': '参考币安钱包行情',
+    'result.priceHint': '💡 可手动修改，模拟不同退出价格的盈亏',
     'pnl.title': '盈亏表',
     'pnl.subtitle': '退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）',
     'pnl.col.exit': '退出价',
@@ -1087,6 +1093,7 @@ const I18N = {
     'result.spotNoData': 'Pre-market K-line unavailable',
     'result.resetPrice': 'Reset to live',
     'result.binanceRef': 'Binance Wallet quote',
+    'result.priceHint': '💡 Editable — type any price to simulate exit P&L',
     'pnl.title': 'P&L Table',
     'pnl.subtitle': 'Exit price × SPCX − actual cost (excess is refunded)',
     'pnl.col.exit': 'Exit',
