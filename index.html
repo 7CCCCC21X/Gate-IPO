@@ -105,6 +105,39 @@
   details.settings .controls { margin-top:12px; padding:14px; background:var(--c-card2); border-radius:var(--radius); border:1px solid var(--c-border); }
   /* 盈亏大卡过渡 */
   .profit-card { transition:background .35s ease, border-color .35s ease, transform .25s ease; }
+  /* 顶栏 */
+  .topbar {
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    flex-wrap:wrap; margin-bottom:14px;
+  }
+  .topbar-left, .topbar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .topbar-meta {
+    font-size:12px; color:var(--c-sub); display:inline-flex; align-items:center;
+    gap:6px; padding:0 4px;
+  }
+  .topbar-meta b { color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums; min-width:32px; display:inline-block; text-align:right; }
+  .topbar-sep { opacity:0.5; }
+  .footer-pill.promo {
+    background:linear-gradient(135deg, #f59e0b, #ef4444);
+    color:#fff; border-color:transparent;
+    box-shadow:0 4px 14px rgba(245,158,11,.35);
+    animation:promo-pulse 2.4s ease-in-out infinite;
+  }
+  .footer-pill.promo:hover {
+    background:linear-gradient(135deg, #f59e0b, #dc2626);
+    color:#fff; border-color:transparent; transform:translateY(-1px);
+    box-shadow:0 6px 18px rgba(245,158,11,.45);
+  }
+  @keyframes promo-pulse {
+    0%,100% { box-shadow:0 4px 14px rgba(245,158,11,.35); }
+    50%     { box-shadow:0 4px 22px rgba(239,68,68,.55); }
+  }
+  @media (max-width: 720px) {
+    .topbar { gap:8px; }
+    .topbar-left, .topbar-right { gap:6px; }
+    .topbar-meta { font-size:11px; }
+    .footer-pill.promo span { font-size:12px; }
+  }
   /* footer pills */
   .footer {
     display:flex; justify-content:center; align-items:center; gap:10px;
@@ -370,6 +403,32 @@
 <body>
 <div class="page">
 
+<div class="topbar">
+  <div class="topbar-left">
+    <a class="footer-pill promo" href="https://www.gate.com/zh/signup?ref_type=103&ref=XIAOCCCC" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 2L2 7v10l10 5 10-5V7L12 2zm0 2.236L19.5 8 12 11.764 4.5 8 12 4.236zM4 9.618l7 3.5v7.764l-7-3.5V9.618zm9 11.264v-7.764l7-3.5v7.764l-7 3.5z"/></svg>
+      <span data-i18n="topbar.gate">注册 Gate · 现货合约 50% 手续费返佣</span>
+    </a>
+  </div>
+  <div class="topbar-right">
+    <span class="topbar-meta">
+      <span id="lastUpdated"></span>
+      <span class="topbar-sep" id="cdSep">·</span>
+      <span data-i18n="topbar.next">下次</span> <b id="countdown">—s</b>
+    </span>
+    <a class="footer-pill" href="https://x.com/intent/follow?screen_name=0xXIAOc" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      <span>@0xXIAOc</span>
+    </a>
+    <a class="footer-pill" href="https://t.me/xiaoccaac" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+      <span data-i18n="footer.telegram">加入交流群</span>
+    </a>
+    <button type="button" class="footer-pill" id="langToggle">EN</button>
+    <button type="button" class="footer-pill" id="themeBtn" aria-label="theme">🌓</button>
+  </div>
+</div>
+
 <div class="hero">
   <div class="hero-icon">SPCX</div>
   <div class="hero-main">
@@ -503,22 +562,7 @@
   </div>
 </section>
 
-<div class="footer">
-  <a class="footer-pill" href="https://x.com/intent/follow?screen_name=0xXIAOc" target="_blank" rel="noopener noreferrer">
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-    <span>@0xXIAOc</span>
-  </a>
-  <a class="footer-pill" href="https://t.me/xiaoccaac" target="_blank" rel="noopener noreferrer">
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-    <span data-i18n="footer.telegram">加入交流群</span>
-  </a>
-  <button type="button" class="footer-pill" id="langToggle">EN</button>
-  <button type="button" class="footer-pill" id="themeBtn" aria-label="theme">🌓</button>
-</div>
-
 <div class="footnote">
-  <span id="lastUpdated"></span>
-  <span class="footnote-sep"> · </span>
   <span data-i18n="footer.source">数据来自 Gate Launchpad 与 Sintral · 仅供参考</span>
 </div>
 </div>  <!-- .page -->
@@ -598,7 +642,9 @@ const I18N = {
     'common.loading': '加载中…',
     'footer.telegram': '加入交流群',
     'footer.source': '数据来自 Gate Launchpad 与 Sintral · 仅供参考',
-    'footer.lastUpdated': '最后更新 {time}',
+    'footer.lastUpdated': '已更新 {time}',
+    'topbar.gate': '注册 Gate · 现货合约 50% 手续费返佣',
+    'topbar.next': '下次',
   },
   en: {
     'hero.title': 'Gate SpaceX Pre-IPO',
@@ -671,7 +717,9 @@ const I18N = {
     'common.loading': 'Loading…',
     'footer.telegram': 'Join Community',
     'footer.source': 'Data from Gate Launchpad & Sintral · For reference only',
-    'footer.lastUpdated': 'Last updated {time}',
+    'footer.lastUpdated': 'Updated {time}',
+    'topbar.gate': 'Sign up Gate · 50% fee rebate (Spot & Futures)',
+    'topbar.next': 'Next',
   },
 };
 let currentLang = (() => { try { return localStorage.getItem('gate-spcx-lang') || 'zh'; } catch { return 'zh'; } })();
@@ -1300,8 +1348,19 @@ async function tickAll() {
 
 function startLoop() {
   if (state.timer) clearInterval(state.timer);
+  if (state.cdTimer) clearInterval(state.cdTimer);
   tickAll();
-  state.timer = setInterval(tickAll, state.intervalSec * 1000);
+  state.nextAt = Date.now() + state.intervalSec * 1000;
+  state.timer = setInterval(() => {
+    tickAll();
+    state.nextAt = Date.now() + state.intervalSec * 1000;
+  }, state.intervalSec * 1000);
+  state.cdTimer = setInterval(() => {
+    const el = document.getElementById('countdown');
+    if (!el) return;
+    const s = Math.max(0, Math.round((state.nextAt - Date.now()) / 1000));
+    el.textContent = s + 's';
+  }, 250);
 }
 
 // ---------- 持久化 ----------
