@@ -380,17 +380,51 @@
   .detail-sub { font-size:11px; color:var(--c-sub); margin-top:4px; line-height:1.4; }
   /* 头条：预计盈亏大卡 */
   .profit-card {
-    margin:16px 0 4px; padding:20px; border-radius:var(--radius);
-    text-align:center; transition:background .2s, border-color .2s;
+    margin:0; padding:28px 24px 22px;
+    border-radius:16px; text-align:center;
+    transition:background .25s ease, border-color .25s ease, box-shadow .25s ease;
     border:1.5px solid var(--c-border); background:var(--c-card2);
+    position:relative; overflow:hidden;
   }
-  .profit-card.positive { background:var(--c-success-bg); border-color:rgba(5,150,105,.25); }
-  .profit-card.negative { background:var(--c-error-bg);   border-color:rgba(220,38,38,.2); }
-  .profit-card .profit-label { font-size:13px; color:var(--c-sub); margin-bottom:6px; }
-  .profit-card .profit-value { font-size:30px; font-weight:800; letter-spacing:-.5px; }
-  .profit-card.positive .profit-value { color:var(--c-success); }
-  .profit-card.negative .profit-value { color:var(--c-error); }
-  .profit-card .profit-sub { font-size:12px; color:var(--c-sub); margin-top:4px; }
+  .profit-card.positive {
+    background:linear-gradient(135deg, var(--c-success-bg) 0%, rgba(52,211,153,0.04) 100%);
+    border-color:rgba(5,150,105,.35);
+    box-shadow:0 6px 24px rgba(5,150,105,0.15);
+  }
+  .profit-card.negative {
+    background:linear-gradient(135deg, var(--c-error-bg) 0%, rgba(248,113,113,0.04) 100%);
+    border-color:rgba(220,38,38,.3);
+    box-shadow:0 6px 24px rgba(220,38,38,0.12);
+  }
+  .profit-card .profit-label {
+    font-size:12px; color:var(--c-sub); margin-bottom:10px;
+    text-transform:uppercase; letter-spacing:.5px; font-weight:600;
+  }
+  .profit-card .profit-value {
+    font-size:40px; font-weight:800; letter-spacing:-1px; line-height:1.1;
+  }
+  .profit-card.positive .profit-value { color:var(--c-success); text-shadow:0 2px 20px rgba(5,150,105,0.18); }
+  .profit-card.negative .profit-value { color:var(--c-error);   text-shadow:0 2px 20px rgba(220,38,38,0.15); }
+  .profit-lines {
+    margin:18px auto 0; max-width:360px;
+    padding-top:14px; border-top:1px dashed var(--c-border);
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .profit-line {
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:13px; gap:14px;
+  }
+  .profit-line .pl-label { color:var(--c-sub); }
+  .profit-line .pl-value { font-weight:700; font-variant-numeric:tabular-nums; color:var(--c-text); }
+  .profit-line .pl-value.pos { color:var(--c-success); }
+  .profit-line .pl-value.neg { color:var(--c-error); }
+  .profit-empty { font-size:12px; color:var(--c-sub); margin-top:10px; display:none; }
+  .profit-card.empty .profit-lines { display:none; }
+  .profit-card.empty .profit-empty { display:block; }
+  @media (max-width: 640px) {
+    .profit-card { padding:22px 18px 18px; }
+    .profit-card .profit-value { font-size:32px; }
+  }
   table.pnl {
     width:100%; border-collapse:separate; border-spacing:0;
     font-size:13px; font-variant-numeric:tabular-nums;
@@ -756,7 +790,17 @@
   <div id="profitCard" class="profit-card">
     <div class="profit-label" data-i18n="estimator.profitLabel">当前盘前价下的预计盈亏</div>
     <div id="profitValue" class="profit-value">—</div>
-    <div id="profitSub" class="profit-sub" data-i18n="common.loading">等待数据加载…</div>
+    <div class="profit-lines" id="profitLines">
+      <div class="profit-line">
+        <span class="pl-label" data-i18n="estimator.profitGet">预计可得</span>
+        <span class="pl-value" id="profitSpcx">—</span>
+      </div>
+      <div class="profit-line">
+        <span class="pl-label" data-i18n="estimator.profitSell">按现价卖出预计盈利</span>
+        <span class="pl-value" id="profitSell">—</span>
+      </div>
+    </div>
+    <div id="profitEmpty" class="profit-empty" data-i18n="common.loading">等待数据加载…</div>
   </div>
 
   <div id="compareView" style="display:none">
@@ -1011,8 +1055,8 @@ const I18N = {
     'estimator.profitLabel': '当前盘前价下的预计盈亏',
     'estimator.profitNoPrice': '盘前行情暂不可用',
     'estimator.profitWaiting': '等待中签结果…',
-    'estimator.profitFormula': 'SPCX 涨跌 {tokenRoi} · 锁仓 {lockup} 回报 {lockupRoi}',
-    'estimator.profitDetail': '{spcx} SPCX × {price} − 消耗 {cost} = {profit} {coin}',
+    'estimator.profitGet': '预计可得',
+    'estimator.profitSell': '按现价卖出预计盈利',
     'detail.title': '查看计算明细（48h 加权均值 · 退款 · 盈亏表）',
     'detail.spcxRaw': 'SPCX 原值 / 上限',
     'detail.refund': '退款 / 资金利用率',
@@ -1121,8 +1165,8 @@ const I18N = {
     'estimator.profitLabel': 'Estimated P&L at Current Pre-Market Price',
     'estimator.profitNoPrice': 'Pre-market quote unavailable',
     'estimator.profitWaiting': 'Waiting for allocation…',
-    'estimator.profitFormula': 'Token {tokenRoi} · {lockup} lockup return {lockupRoi}',
-    'estimator.profitDetail': '{spcx} SPCX × {price} − consumed {cost} = {profit} {coin}',
+    'estimator.profitGet': 'You receive',
+    'estimator.profitSell': 'Profit if sold at current price',
     'detail.title': 'View calculation details (48h avg · refund · P&L)',
     'detail.spcxRaw': 'SPCX raw / cap',
     'detail.refund': 'Refund / utilization',
@@ -1655,35 +1699,24 @@ function renderEstimator() {
 
   // 价格输入框由上面同步，子标签保持币安链接 — 不在这里覆盖
 
-  // 预期盈亏大卡（按当前盘前价 - 实际消耗成本）
+  // 预期盈亏大卡
   const pCard = $('profitCard');
   if (price != null && r.spcx > 0) {
     const revenue = price * r.spcx;
     const profit = revenue - r.actualCost;
-    const tokenRoi = r.actualCost > 0 ? (profit / r.actualCost * 100) : 0;
-    const lockupRoi = r.lockup > 0 ? (profit / r.lockup * 100) : 0;
+    pCard.classList.remove('empty');
     pCard.classList.toggle('positive', profit >= 0);
     pCard.classList.toggle('negative', profit < 0);
     tweenNumber($('profitValue'), profit, { decimals: 2, sign: true, suffix: ' ' + r.pool, duration: 700 });
-    const tokenRoiStr = (tokenRoi >= 0 ? '+' : '') + tokenRoi.toFixed(2) + '%';
-    const lockupRoiStr = (lockupRoi >= 0 ? '+' : '') + lockupRoi.toFixed(3) + '%';
-    $('profitSub').innerHTML =
-      `<div>${t('estimator.profitFormula', {
-        tokenRoi: `<b style="color:inherit">${tokenRoiStr}</b>`,
-        lockup: fmtNum(r.lockup),
-        lockupRoi: `<b style="color:inherit">${lockupRoiStr}</b>`,
-      })}</div>` +
-      `<div style="margin-top:4px;opacity:0.85">${t('estimator.profitDetail', {
-        spcx: fmtNum(r.spcx, 4),
-        price: price.toFixed(2),
-        cost: fmtNum(r.actualCost, 2),
-        profit: (profit >= 0 ? '+' : '') + fmtNum(profit, 2),
-        coin: r.pool,
-      })}</div>`;
+    $('profitSpcx').textContent = fmtQty(r.spcx) + ' SPCX';
+    const sellEl = $('profitSell');
+    sellEl.textContent = (profit >= 0 ? '+' : '') + fmtMoney(profit) + ' ' + r.pool;
+    sellEl.className = 'pl-value ' + (profit >= 0 ? 'pos' : 'neg');
   } else {
     pCard.classList.remove('positive', 'negative');
+    pCard.classList.add('empty');
     $('profitValue').textContent = '—';
-    $('profitSub').textContent = price == null ? t('estimator.profitNoPrice') : t('estimator.profitWaiting');
+    $('profitEmpty').textContent = price == null ? t('estimator.profitNoPrice') : t('estimator.profitWaiting');
   }
 
   // 盈亏表
