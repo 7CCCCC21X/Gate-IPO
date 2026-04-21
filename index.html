@@ -509,13 +509,14 @@ async function fetchKline() {
   }, 'workingKline');
 }
 
+// dquery.sintral.io 返回数组顺序：[open, high, low, close, volume, timestamp_ms, trades]
 function normalizeCandles(arr) {
   if (!Array.isArray(arr)) return [];
   const out = [];
   for (const c of arr) {
     let t, o, h, l, cl, v;
     if (Array.isArray(c)) {
-      [t, o, h, l, cl, v] = c.map(Number);
+      [o, h, l, cl, v, t] = c.map(Number);
     } else if (c && typeof c === 'object') {
       t  = +(c.t  ?? c.time ?? c.timestamp ?? c.ts ?? 0);
       o  = +(c.o  ?? c.open  ?? 0);
@@ -526,6 +527,8 @@ function normalizeCandles(arr) {
     } else continue;
     if (isFinite(cl) && cl > 0) out.push({ t, o, h, l, c: cl, v });
   }
+  // 按时间升序，末尾即最新
+  out.sort((a, b) => a.t - b.t);
   return out;
 }
 
