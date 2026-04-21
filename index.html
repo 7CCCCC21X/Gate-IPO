@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gate IPO 实时数据 - SPCX</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #151923;
+    --panel-2: #1d2230;
+    --border: #262b3a;
+    --text: #e6e9ef;
+    --muted: #8a92a6;
+    --accent: #4f8cff;
+    --ok: #22c55e;
+    --warn: #f59e0b;
+    --err: #ef4444;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  h1 { font-size: 20px; margin: 0; }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.ok { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .dot.err { background: var(--err); box-shadow: 0 0 8px var(--err); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card .label { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .card .value { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .card .sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .products { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .product {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .product h2 { margin: 0 0 12px; font-size: 16px; display: flex; justify-content: space-between; }
+  .bar {
+    height: 8px;
+    background: var(--panel-2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0 12px;
+  }
+  .bar > div {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #22c55e);
+    transition: width 0.4s ease;
+  }
+  .row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+  .row .k { color: var(--muted); }
+  .row .v { font-variant-numeric: tabular-nums; }
+  .flash { animation: flash 0.6s ease; }
+  @keyframes flash {
+    0% { background-color: rgba(79, 140, 255, 0.25); }
+    100% { background-color: transparent; }
+  }
+  .times {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+  }
+  .times .row .v { color: var(--text); }
+  .err-box {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid var(--err);
+    color: var(--err);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    display: none;
+  }
+  .spin {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 2px solid var(--accent); border-top-color: transparent;
+    animation: spin 0.8s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gate IPO 实时数据 · <span id="coin">SPCX</span></h1>
+  <div class="status">
+    <span id="dot" class="dot"></span>
+    <span id="statusText">等待首次加载…</span>
+    <span id="countdown"></span>
+  </div>
+</header>
+
+<div id="err" class="err-box"></div>
+
+<div class="grid" id="overview"></div>
+
+<div class="products" id="products"></div>
+
+<div class="times" id="times"></div>
+
+<script>
+const REFRESH_MS = 10000;
+let prev = {};
+let countdownTimer = null;
+let nextFetchAt = 0;
+
+function fmtNum(n, digits = 2) {
+  const x = Number(n);
+  if (!isFinite(x)) return String(n);
+  return x.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+function fmtInt(n) {
+  const x = Number(n);
+  if (!isFinite(x)) return String(n);
+  return x.toLocaleString('en-US');
+}
+function fmtUSD(n) {
+  const x = Number(n);
+  if (!isFinite(x)) return String(n);
+  if (x >= 1e12) return '$' + (x / 1e12).toFixed(2) + 'T';
+  if (x >= 1e9)  return '$' + (x / 1e9).toFixed(2)  + 'B';
+  if (x >= 1e6)  return '$' + (x / 1e6).toFixed(2)  + 'M';
+  return '$' + fmtNum(x);
+}
+function fmtTime(ts) {
+  if (!ts) return '-';
+  const d = new Date(ts * 1000);
+  return d.toLocaleString('zh-CN', { hour12: false });
+}
+function statusText(front, distribute) {
+  const s = { 1: '预热中', 2: '认购中', 3: '认购结束', 4: '已分发' };
+  return s[front] || '未知';
+}
+
+function renderCard(parent, id, label, value, sub, animate) {
+  let el = parent.querySelector('#' + id);
+  if (!el) {
+    el = document.createElement('div');
+    el.className = 'card';
+    el.id = id;
+    el.innerHTML = `<div class="label"></div><div class="value"></div><div class="sub"></div>`;
+    parent.appendChild(el);
+  }
+  el.querySelector('.label').textContent = label;
+  const valEl = el.querySelector('.value');
+  if (valEl.textContent !== value) {
+    valEl.textContent = value;
+    if (animate) {
+      el.classList.remove('flash');
+      void el.offsetWidth;
+      el.classList.add('flash');
+    }
+  }
+  el.querySelector('.sub').textContent = sub || '';
+}
+
+function render(data) {
+  const d = data.data;
+  document.getElementById('coin').textContent = d.coin || '';
+
+  const overview = document.getElementById('overview');
+  renderCard(overview, 'c-status', '状态', statusText(d.front_status), `project_id=${d.id}`, false);
+  renderCard(overview, 'c-valuation', '隐含估值', fmtUSD(d.implied_valuation), `总份额 ${fmtInt(d.total_shares)}`, false);
+  renderCard(overview, 'c-overall', '综合进度', (+d.combined_progress_rate).toFixed(4) + '%',
+    `认购比 ${(+d.subscription_ratio).toFixed(4)}`, prev.combined_progress_rate !== d.combined_progress_rate);
+  prev.combined_progress_rate = d.combined_progress_rate;
+
+  const productsEl = document.getElementById('products');
+  productsEl.innerHTML = '';
+  (d.products || []).forEach((p) => {
+    const prevP = prev['p' + p.id] || {};
+    const changed = (k) => prevP[k] !== p[k];
+
+    const card = document.createElement('div');
+    card.className = 'product';
+    const rate = Math.min(100, Number(p.progress_rate) || 0);
+    card.innerHTML = `
+      <h2><span>${p.coin} 池</span><span>${(+p.progress_rate).toFixed(4)}%</span></h2>
+      <div class="bar"><div style="width:${rate}%"></div></div>
+      <div class="row"><span class="k">单价</span><span class="v">${p.price} ${p.coin}</span></div>
+      <div class="row ${changed('invest_amount') ? 'flash' : ''}"><span class="k">总投入</span><span class="v">${fmtNum(p.invest_amount)} ${p.coin}</span></div>
+      <div class="row ${changed('valid_invest_amount') ? 'flash' : ''}"><span class="k">有效投入</span><span class="v">${fmtNum(p.valid_invest_amount)} ${p.coin}</span></div>
+      <div class="row ${changed('mortgage_count') ? 'flash' : ''}"><span class="k">质押人数</span><span class="v">${fmtInt(p.mortgage_count)}</span></div>
+      <div class="row ${changed('subscription_ratio') ? 'flash' : ''}"><span class="k">认购比</span><span class="v">${(+p.subscription_ratio).toFixed(4)}x</span></div>
+      <div class="row"><span class="k">份额上限/用户</span><span class="v">${p.user_top_share}</span></div>
+      <div class="row"><span class="k">总份额</span><span class="v">${fmtInt(p.total_shares)}</span></div>
+      <div class="row ${changed('user_invest_amount') ? 'flash' : ''}"><span class="k">我的投入</span><span class="v">${fmtNum(p.user_invest_amount)} ${p.coin}</span></div>
+      <div class="row"><span class="k">最低认购</span><span class="v">${p.subscribe_min} ${p.coin}</span></div>
+    `;
+    productsEl.appendChild(card);
+
+    prev['p' + p.id] = { ...p };
+  });
+
+  const timesEl = document.getElementById('times');
+  timesEl.innerHTML = `
+    <div class="row"><span class="k">预热时间</span><span class="v">${fmtTime(d.warm_up_time)}</span></div>
+    <div class="row"><span class="k">开始认购</span><span class="v">${fmtTime(d.start_time)}</span></div>
+    <div class="row"><span class="k">结束认购</span><span class="v">${fmtTime(d.end_time)}</span></div>
+    <div class="row"><span class="k">发放时间</span><span class="v">${fmtTime(d.distribute_time)}</span></div>
+    <div class="row"><span class="k">是否白名单</span><span class="v">${d.is_whitelist ? '是' : '否'}</span></div>
+    <div class="row"><span class="k">分发状态</span><span class="v">${d.distribute_status}</span></div>
+  `;
+}
+
+function setStatus(kind, msg) {
+  document.getElementById('dot').className = 'dot ' + kind;
+  document.getElementById('statusText').textContent = msg;
+}
+
+function showError(msg) {
+  const el = document.getElementById('err');
+  if (msg) {
+    el.textContent = msg;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+async function fetchOnce() {
+  setStatus('', '加载中…');
+  try {
+    const r = await fetch('/api/ipo?t=' + Date.now());
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const json = await r.json();
+    if (json.code !== 200) throw new Error(json.message || '上游返回错误');
+    render(json);
+    showError('');
+    setStatus('ok', '已更新于 ' + new Date().toLocaleTimeString('zh-CN', { hour12: false }));
+  } catch (e) {
+    showError('请求失败：' + e.message);
+    setStatus('err', '请求失败');
+  }
+}
+
+function startLoop() {
+  fetchOnce();
+  nextFetchAt = Date.now() + REFRESH_MS;
+  setInterval(() => {
+    fetchOnce();
+    nextFetchAt = Date.now() + REFRESH_MS;
+  }, REFRESH_MS);
+
+  countdownTimer = setInterval(() => {
+    const s = Math.max(0, Math.round((nextFetchAt - Date.now()) / 1000));
+    document.getElementById('countdown').textContent = '· 下一次 ' + s + 's';
+  }, 200);
+}
+
+startLoop();
+</script>
+</body>
+</html>
