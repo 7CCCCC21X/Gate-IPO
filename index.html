@@ -468,7 +468,6 @@
       <span>开 <b id="cOpen">—</b></span>
       <span>高 <b id="cHigh">—</b></span>
       <span>低 <b id="cLow">—</b></span>
-      <span>样本 <b id="cCount">—</b></span>
     </div>
   </div>
   <div class="chart-wrap">
@@ -884,7 +883,7 @@ function renderChart() {
   const svg = $('chart');
   if (!all.length) {
     svg.innerHTML = '<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">暂无盘前行情数据</text>';
-    ['cPrice','cOpen','cHigh','cLow','cCount'].forEach(id => $(id).textContent = '—');
+    ['cPrice','cOpen','cHigh','cLow'].forEach(id => $(id).textContent = '—');
     $('cDelta').textContent = '';
     return;
   }
@@ -952,7 +951,6 @@ function renderChart() {
   $('cOpen').textContent = data[0].o ? data[0].o.toFixed(4) : data[0].c.toFixed(4);
   $('cHigh').textContent = hi.toFixed(4);
   $('cLow').textContent = lo.toFixed(4);
-  $('cCount').textContent = String(data.length);
 }
 
 function renderHero() {
