@@ -97,6 +97,14 @@
   .field input[type="number"]:focus { border-color:var(--c-primary); box-shadow:0 0 0 3px var(--c-primary-light); }
   .field input[type="range"] { width:100%; accent-color:var(--c-primary); margin-top:4px; }
   .field input.invalid { border-color:var(--c-error); }
+  .input-with-suffix { position:relative; }
+  .input-with-suffix input { padding-right:60px; }
+  .input-with-suffix .suffix {
+    position:absolute; right:14px; top:50%; transform:translateY(-50%);
+    font-size:13px; color:var(--c-sub); font-weight:600; pointer-events:none;
+  }
+  .amount-formatted { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
+  .amount-formatted b { color:var(--c-text); font-weight:600; font-variant-numeric:tabular-nums; }
   .field .hint { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
   .field .hint.err { color:var(--c-error); }
   .radio-row { display:flex; gap:8px; flex-wrap:wrap; }
@@ -327,8 +335,12 @@
     </div>
 
     <div class="field">
-      <label class="ttl">投入金额（≥ 100）</label>
-      <input id="amount" type="number" min="100" step="1" value="10000" />
+      <label class="ttl">投入金额 <span class="muted">（≥ 100）</span></label>
+      <div class="input-with-suffix">
+        <input id="amount" type="number" min="100" step="1" value="10000" />
+        <span id="amountSuffix" class="suffix">USDT</span>
+      </div>
+      <div class="amount-formatted" id="amountFormatted"></div>
       <div class="hint" id="amountHint"></div>
     </div>
 
@@ -469,6 +481,14 @@ function fmtUSD(n) {
   if (x >= 1e9)  return '$' + (x/1e9).toFixed(2) + 'B';
   if (x >= 1e6)  return '$' + (x/1e6).toFixed(2) + 'M';
   return '$' + fmtNum(x);
+}
+function fmtChinese(n) {
+  const x = Number(n);
+  if (!isFinite(x) || x <= 0) return '';
+  if (x >= 1e8) return (x / 1e8).toFixed(2).replace(/\.?0+$/, '') + ' 亿';
+  if (x >= 1e4) return (x / 1e4).toFixed(2).replace(/\.?0+$/, '') + ' 万';
+  if (x >= 1e3) return (x / 1e3).toFixed(2).replace(/\.?0+$/, '') + ' 千';
+  return '';
 }
 function fmtPct(n, d = 4) {
   const x = Number(n);
@@ -703,6 +723,9 @@ function renderEstimator() {
     amountHint.textContent = '';
     amountHint.classList.remove('err');
   }
+  $('amountSuffix').textContent = inputs.pool;
+  const cn = fmtChinese(inputs.amount);
+  $('amountFormatted').innerHTML = cn ? `≈ <b>${cn}</b> ${inputs.pool} · ${fmtNum(inputs.amount, 0)}` : '';
   $('hourLabel').textContent = inputs.hour.toFixed(2) + 'h';
 
   // 结果卡片
