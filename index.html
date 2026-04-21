@@ -105,13 +105,32 @@
   details.settings .controls { margin-top:12px; padding:14px; background:var(--c-card2); border-radius:var(--radius); border:1px solid var(--c-border); }
   /* 盈亏大卡过渡 */
   .profit-card { transition:background .35s ease, border-color .35s ease, transform .25s ease; }
+  /* footer pills */
+  .footer {
+    display:flex; justify-content:center; align-items:center; gap:10px;
+    flex-wrap:wrap; padding:28px 12px 8px;
+  }
+  .footer-pill {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 16px; border-radius:999px; font-size:13px; font-weight:600;
+    border:1.5px solid var(--c-border); background:var(--c-card); color:var(--c-text);
+    text-decoration:none; cursor:pointer; transition:border-color .2s, background .2s, color .2s;
+    white-space:nowrap; box-shadow:none;
+  }
+  .footer-pill:hover { border-color:var(--c-primary); background:var(--c-primary-light); color:var(--c-primary); }
+  .footer-pill svg { width:14px; height:14px; flex-shrink:0; }
   /* 注脚 */
   .footnote {
-    text-align:center; font-size:11px; color:var(--c-sub); padding:24px 12px 12px;
+    text-align:center; font-size:11px; color:var(--c-sub); padding:8px 12px 24px;
     line-height:1.7;
   }
   .footnote a { color:var(--c-primary); text-decoration:none; }
   .footnote a:hover { text-decoration:underline; }
+  .footnote-sep { opacity:0.5; }
+  @media (max-width: 480px) {
+    .footer { gap:6px; padding:20px 8px 4px; }
+    .footer-pill { padding:6px 12px; font-size:12px; }
+  }
   .card .label { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .card .value { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
   .card .sub { color:var(--muted); font-size:12px; margin-top:4px; }
@@ -334,78 +353,50 @@
 <div class="hero">
   <div class="hero-icon">SPCX</div>
   <div class="hero-main">
-    <div class="hero-title">Gate SpaceX Pre-IPO <span class="badge">收益预估</span></div>
+    <div class="hero-title"><span data-i18n="hero.title">Gate SpaceX Pre-IPO</span> <span class="badge" data-i18n="hero.badge">收益预估</span></div>
     <div class="hero-meta">
-      <span>隐含估值 <b id="heroVal" class="skeleton">$0.00T</b></span>
-      <span>认购单价 <b id="heroPrice">590 USDT</b></span>
-      <span>综合超额 <b id="heroRatio" class="skeleton">0.00x</b></span>
-      <span id="heroRemain" class="skeleton">剩余 ——</span>
+      <span><span data-i18n="hero.valuation">隐含估值</span> <b id="heroVal" class="skeleton">$0.00T</b></span>
+      <span><span data-i18n="hero.price">认购单价</span> <b id="heroPrice">590 USDT</b></span>
+      <span><span data-i18n="hero.oversub">综合超额</span> <b id="heroRatio" class="skeleton">0.00x</b></span>
+      <span id="heroRemain" class="skeleton">— —</span>
     </div>
   </div>
   <div class="hero-price">
-    <div class="lbl">当前盘前价</div>
+    <div class="lbl" data-i18n="hero.spot">当前盘前价</div>
     <div class="val skeleton" id="heroSpot">000.0000</div>
     <div id="heroDelta" class="delta flat">—</div>
   </div>
 </div>
 
 <section class="card">
-  <h2>当前池子快照 <span id="windowRemain" class="muted"></span></h2>
-  <div class="snapshot-bar" id="snapshotBar">加载中…</div>
+  <h2><span data-i18n="snapshot.title">当前池子快照</span> <span id="windowRemain" class="muted"></span></h2>
+  <div class="snapshot-bar" id="snapshotBar" data-i18n="common.loading">加载中…</div>
   <div class="progress-wrap">
     <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
     <div class="progress-meta">
-      <span>认购窗口进度 <b id="progressPct">—</b> · <span id="progressTimes">—</span></span>
-      <span>剩余 <b id="progressRemain">—</b></span>
+      <span><span data-i18n="snapshot.windowProgress">认购窗口进度</span> <b id="progressPct">—</b> · <span id="progressTimes">—</span></span>
+      <span><span data-i18n="snapshot.remaining">剩余</span> <b id="progressRemain">—</b></span>
     </div>
   </div>
 </section>
 
-<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
-  <span id="statusBadge" class="status">
-    <span class="dot"></span>
-    <span id="statusText">等待首次加载…</span>
-    <span id="countdown"></span>
-  </span>
-  <button id="themeBtn" class="theme-toggle" title="切换主题">🌓</button>
-</div>
-
-<details class="settings">
-  <summary>⚙ 高级设置</summary>
-  <div class="controls">
-    <label>数据源
-      <select id="src">
-        <option value="codetabs">codetabs.com（推荐）</option>
-        <option value="local">本地代理 /api</option>
-        <option value="auto">自动回退</option>
-        <option value="allorigins">allorigins.win</option>
-        <option value="corsproxy">corsproxy.io</option>
-        <option value="direct">直连</option>
-      </select>
-    </label>
-    <label>刷新 <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒</label>
-    <label>项目 ID <input id="pid" type="number" min="1" value="2" style="width:70px" /></label>
-    <button id="apply">应用</button>
-  </div>
-</details>
-
 <div id="err" class="err-box"></div>
 
 <section id="estimator" class="card">
-  <h2>收益预估</h2>
+  <h2 data-i18n="estimator.title">收益预估</h2>
 
   <div class="form-grid">
     <div class="field">
-      <label class="ttl">选择池子</label>
+      <label class="ttl" data-i18n="estimator.pool">选择池子</label>
       <div class="radio-row">
-        <label><input type="radio" name="pool" value="USDT" checked> USDT 池 (70%)</label>
-        <label><input type="radio" name="pool" value="GUSD"> GUSD 池 (30%)</label>
+        <label><input type="radio" name="pool" value="USDT" checked> <span data-i18n="estimator.poolUsdt">USDT 池 (70%)</span></label>
+        <label><input type="radio" name="pool" value="GUSD"> <span data-i18n="estimator.poolGusd">GUSD 池 (30%)</span></label>
       </div>
       <div class="hint" id="poolHint"></div>
     </div>
 
     <div class="field">
-      <label class="ttl">投入金额 <span class="muted">（≥ 100）</span></label>
+      <label class="ttl"><span data-i18n="estimator.amount">投入金额</span> <span class="muted" data-i18n="estimator.amountNote">（≥ 100）</span></label>
       <div class="input-with-suffix">
         <input id="amount" type="number" min="100" step="1" value="10000" />
         <span id="amountSuffix" class="suffix">USDT</span>
@@ -415,40 +406,40 @@
     </div>
 
     <div class="field">
-      <label class="ttl">入场小时偏移 <span id="hourLabel" style="color:var(--text)">0.00h</span></label>
+      <label class="ttl"><span data-i18n="estimator.hour">入场小时偏移</span> <span id="hourLabel" style="color:var(--text)">0.00h</span></label>
       <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
       <div class="quick-btns">
-        <button data-q="start">认购开始时</button>
-        <button data-q="now">现在</button>
-        <button data-q="last1h">结束前 1h</button>
+        <button data-q="start" data-i18n="estimator.qStart">认购开始时</button>
+        <button data-q="now" data-i18n="estimator.qNow">现在</button>
+        <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h</button>
       </div>
     </div>
   </div>
 
   <div id="profitCard" class="profit-card">
-    <div class="profit-label">当前盘前价下的预计盈亏</div>
+    <div class="profit-label" data-i18n="estimator.profitLabel">当前盘前价下的预计盈亏</div>
     <div id="profitValue" class="profit-value">—</div>
-    <div id="profitSub" class="profit-sub">等待数据加载…</div>
+    <div id="profitSub" class="profit-sub" data-i18n="common.loading">等待数据加载…</div>
   </div>
 
   <div class="result-grid">
-    <div class="card"><div class="label">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
-    <div class="card"><div class="label">预计中签率</div><div id="r-ratio" class="value">—</div><div id="r-ratio-sub" class="sub"></div></div>
-    <div class="card"><div class="label">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
-    <div class="card"><div class="label">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
-    <div class="card"><div class="label">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub">假设单位：USDT</div></div>
+    <div class="card"><div class="label" data-i18n="result.avg">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
+    <div class="card"><div class="label" data-i18n="result.ratio">预计中签率</div><div id="r-ratio" class="value">—</div><div id="r-ratio-sub" class="sub"></div></div>
+    <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
+    <div class="card"><div class="label" data-i18n="result.cost">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
+    <div class="card"><div class="label" data-i18n="result.spotPrice">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub" data-i18n="result.spotNote">假设单位：USDT</div></div>
   </div>
 
-  <h3>盈亏表 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
+  <h3><span data-i18n="pnl.title">盈亏表</span> <span id="pnlSubTitle" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px" data-i18n="pnl.subtitle">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
   <div class="table-wrap">
     <table class="pnl" id="pnlTable">
       <thead><tr>
-        <th>退出价</th>
-        <th>价格 (USDT)</th>
-        <th>收入</th>
-        <th>盈亏</th>
-        <th title="相对实际消耗成本的涨跌">币价 ROI</th>
-        <th title="相对锁仓资金的回报率">锁仓 ROI</th>
+        <th data-i18n="pnl.col.exit">退出价</th>
+        <th data-i18n="pnl.col.price">价格 (USDT)</th>
+        <th data-i18n="pnl.col.revenue">收入</th>
+        <th data-i18n="pnl.col.profit">盈亏</th>
+        <th data-i18n="pnl.col.tokenRoi">币价 ROI</th>
+        <th data-i18n="pnl.col.lockupRoi">锁仓 ROI</th>
       </tr></thead>
       <tbody id="pnlBody"></tbody>
     </table>
@@ -458,35 +449,218 @@
 <section class="card" id="chartCard">
   <div class="chart-head">
     <div>
-      <div class="label" style="color:var(--muted);font-size:12px;margin-bottom:4px">预上市价 · SPCX/USDT · Solana</div>
+      <div class="label" style="color:var(--muted);font-size:12px;margin-bottom:4px" data-i18n="chart.title">预上市价 · SPCX/USDT · Solana</div>
       <div class="chart-price">
         <span id="cPrice">—</span>
         <span id="cDelta" class="delta"></span>
       </div>
     </div>
     <div class="chart-meta">
-      <span>开 <b id="cOpen">—</b></span>
-      <span>高 <b id="cHigh">—</b></span>
-      <span>低 <b id="cLow">—</b></span>
+      <span><span data-i18n="chart.open">开</span> <b id="cOpen">—</b></span>
+      <span><span data-i18n="chart.high">高</span> <b id="cHigh">—</b></span>
+      <span><span data-i18n="chart.low">低</span> <b id="cLow">—</b></span>
     </div>
   </div>
   <div class="chart-wrap">
     <svg id="chart" viewBox="0 0 800 220" preserveAspectRatio="none"></svg>
   </div>
   <div class="chart-range">
-    <button data-r="60">近 1h</button>
-    <button data-r="240" class="active">近 4h</button>
-    <button data-r="500">全部</button>
+    <button data-r="60" data-i18n="chart.r1h">近 1h</button>
+    <button data-r="240" class="active" data-i18n="chart.r4h">近 4h</button>
+    <button data-r="500" data-i18n="chart.rAll">全部</button>
   </div>
 </section>
 
+<div class="footer">
+  <a class="footer-pill" href="https://x.com/intent/follow?screen_name=0xXIAOc" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    <span>@0xXIAOc</span>
+  </a>
+  <a class="footer-pill" href="https://t.me/xiaoccaac" target="_blank" rel="noopener noreferrer">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0h-.056zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+    <span data-i18n="footer.telegram">加入交流群</span>
+  </a>
+  <button type="button" class="footer-pill" id="langToggle">EN</button>
+  <button type="button" class="footer-pill" id="themeBtn" aria-label="theme">🌓</button>
+</div>
+
 <div class="footnote">
-  数据来自 <a href="https://www.gate.com/launchpad" target="_blank" rel="noopener">Gate Launchpad</a> 与 <a href="https://dquery.sintral.io" target="_blank" rel="noopener">Sintral</a>，仅供参考。<br>
-  中签率基于当前 <code>valid_invest_amount</code> 快照估算，最终分配以官方为准；超额部分按规则退款。
+  <span id="lastUpdated"></span>
+  <span class="footnote-sep"> · </span>
+  <span data-i18n="footer.source">数据来自 Gate Launchpad 与 Sintral · 仅供参考</span>
 </div>
 </div>  <!-- .page -->
 
 <script>
+// ---------- i18n ----------
+const I18N = {
+  zh: {
+    'hero.title': 'Gate SpaceX Pre-IPO',
+    'hero.badge': '收益预估',
+    'hero.valuation': '隐含估值',
+    'hero.price': '认购单价',
+    'hero.oversub': '综合超额',
+    'hero.spot': '当前盘前价',
+    'hero.remainSuffix': '后开始',
+    'hero.remain': '剩余 {h}h {m}m',
+    'hero.ended': '认购已结束',
+    'snapshot.title': '当前池子快照',
+    'snapshot.windowProgress': '认购窗口进度',
+    'snapshot.remaining': '剩余',
+    'snapshot.endedShort': '已结束',
+    'snapshot.notStarted': '{h}h 后开始',
+    'snapshot.windowRemain': '（剩余 {h}h {m}m）',
+    'snapshot.windowEnded': '（认购已结束）',
+    'snapshot.poolInvest': '{coin} 池投入',
+    'snapshot.subRatio': '认购比',
+    'estimator.title': '收益预估',
+    'estimator.pool': '选择池子',
+    'estimator.poolUsdt': 'USDT 池 (70%)',
+    'estimator.poolGusd': 'GUSD 池 (30%)',
+    'estimator.amount': '投入金额',
+    'estimator.amountNote': '（≥ 100）',
+    'estimator.amountMin': '最低 100 {coin}',
+    'estimator.hour': '入场小时偏移',
+    'estimator.qStart': '认购开始时',
+    'estimator.qNow': '现在',
+    'estimator.qLast': '结束前 1h',
+    'estimator.profitLabel': '当前盘前价下的预计盈亏',
+    'estimator.profitNoPrice': '盘前行情暂不可用',
+    'estimator.profitWaiting': '等待中签结果…',
+    'estimator.profitFormula': 'SPCX 涨跌 {tokenRoi} · 锁仓 {lockup} 回报 {lockupRoi}',
+    'estimator.profitDetail': '{spcx} SPCX × {price} − 消耗 {cost} = {profit} {coin}',
+    'result.avg': '48h 加权均值',
+    'result.avgFormula': '= {x} × (48 − {h}) / 48',
+    'result.ratio': '预计中签率',
+    'result.ratioPool': '池当前加权总和 {v}',
+    'result.ratioEmpty': '池子暂无他人有效投入',
+    'result.spcx': '预计获得 SPCX',
+    'result.spcxCapped': '⚠️ 受单用户上限 {cap} 截断（原 {raw}）',
+    'result.spcxRaw': '原值 {raw} · 上限 {cap}',
+    'result.cost': '认购成本',
+    'result.costSub': '锁仓 {lockup} · 退款 {refund} · 资金利用率 {util}',
+    'result.spotPrice': '当前预上市价',
+    'result.spotNote': '假设单位：USDT · 最新收盘',
+    'result.spotNoData': '盘前 K-line 暂不可用',
+    'pnl.title': '盈亏表',
+    'pnl.subtitle': '退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）',
+    'pnl.col.exit': '退出价',
+    'pnl.col.price': '价格 (USDT)',
+    'pnl.col.revenue': '收入',
+    'pnl.col.profit': '盈亏',
+    'pnl.col.tokenRoi': '币价 ROI',
+    'pnl.col.lockupRoi': '锁仓 ROI',
+    'pnl.row.spot': '现价',
+    'pnl.row.cost': '成本价 590',
+    'chart.title': '预上市价 · SPCX/USDT · Solana',
+    'chart.open': '开',
+    'chart.high': '高',
+    'chart.low': '低',
+    'chart.r1h': '近 1h',
+    'chart.r4h': '近 4h',
+    'chart.rAll': '全部',
+    'chart.empty': '暂无盘前行情数据',
+    'chart.refLine': '成本 590',
+    'common.loading': '加载中…',
+    'footer.telegram': '加入交流群',
+    'footer.source': '数据来自 Gate Launchpad 与 Sintral · 仅供参考',
+    'footer.lastUpdated': '最后更新 {time}',
+  },
+  en: {
+    'hero.title': 'Gate SpaceX Pre-IPO',
+    'hero.badge': 'Estimator',
+    'hero.valuation': 'Implied Valuation',
+    'hero.price': 'Issue Price',
+    'hero.oversub': 'Oversubscribed',
+    'hero.spot': 'Current Pre-Market Price',
+    'hero.remain': '{h}h {m}m left',
+    'hero.ended': 'Subscription ended',
+    'snapshot.title': 'Pool Snapshot',
+    'snapshot.windowProgress': 'Subscription Window Progress',
+    'snapshot.remaining': 'Remaining',
+    'snapshot.endedShort': 'Ended',
+    'snapshot.notStarted': 'Starts in {h}h',
+    'snapshot.windowRemain': '({h}h {m}m left)',
+    'snapshot.windowEnded': '(Subscription ended)',
+    'snapshot.poolInvest': '{coin} pool',
+    'snapshot.subRatio': 'oversub',
+    'estimator.title': 'Profit Estimator',
+    'estimator.pool': 'Select Pool',
+    'estimator.poolUsdt': 'USDT Pool (70%)',
+    'estimator.poolGusd': 'GUSD Pool (30%)',
+    'estimator.amount': 'Invest Amount',
+    'estimator.amountNote': '(≥ 100)',
+    'estimator.amountMin': 'Minimum 100 {coin}',
+    'estimator.hour': 'Entry Hour Offset',
+    'estimator.qStart': 'At Start',
+    'estimator.qNow': 'Now',
+    'estimator.qLast': 'Last 1h',
+    'estimator.profitLabel': 'Estimated P&L at Current Pre-Market Price',
+    'estimator.profitNoPrice': 'Pre-market quote unavailable',
+    'estimator.profitWaiting': 'Waiting for allocation…',
+    'estimator.profitFormula': 'Token {tokenRoi} · {lockup} lockup return {lockupRoi}',
+    'estimator.profitDetail': '{spcx} SPCX × {price} − consumed {cost} = {profit} {coin}',
+    'result.avg': '48h Weighted Avg',
+    'result.avgFormula': '= {x} × (48 − {h}) / 48',
+    'result.ratio': 'Allocation Ratio',
+    'result.ratioPool': 'Pool weighted total {v}',
+    'result.ratioEmpty': 'No other participants yet',
+    'result.spcx': 'Estimated SPCX',
+    'result.spcxCapped': '⚠️ Capped by per-user max {cap} (raw {raw})',
+    'result.spcxRaw': 'raw {raw} · cap {cap}',
+    'result.cost': 'Subscription Cost',
+    'result.costSub': 'Lockup {lockup} · Refund {refund} · Utilization {util}',
+    'result.spotPrice': 'Current Pre-Market Price',
+    'result.spotNote': 'Assumed unit: USDT · Latest close',
+    'result.spotNoData': 'Pre-market K-line unavailable',
+    'pnl.title': 'P&L Table',
+    'pnl.subtitle': 'Exit price × SPCX − actual cost (excess is refunded)',
+    'pnl.col.exit': 'Exit',
+    'pnl.col.price': 'Price (USDT)',
+    'pnl.col.revenue': 'Revenue',
+    'pnl.col.profit': 'P&L',
+    'pnl.col.tokenRoi': 'Token ROI',
+    'pnl.col.lockupRoi': 'Lockup ROI',
+    'pnl.row.spot': 'Spot',
+    'pnl.row.cost': 'Issue 590',
+    'chart.title': 'Pre-Market Price · SPCX/USDT · Solana',
+    'chart.open': 'O',
+    'chart.high': 'H',
+    'chart.low': 'L',
+    'chart.r1h': '1h',
+    'chart.r4h': '4h',
+    'chart.rAll': 'All',
+    'chart.empty': 'No pre-market data yet',
+    'chart.refLine': 'Cost 590',
+    'common.loading': 'Loading…',
+    'footer.telegram': 'Join Community',
+    'footer.source': 'Data from Gate Launchpad & Sintral · For reference only',
+    'footer.lastUpdated': 'Last updated {time}',
+  },
+};
+let currentLang = (() => { try { return localStorage.getItem('gate-spcx-lang') || 'zh'; } catch { return 'zh'; } })();
+function t(key, params) {
+  const dict = I18N[currentLang] || I18N.zh;
+  let str = dict[key] != null ? dict[key] : (I18N.zh[key] != null ? I18N.zh[key] : key);
+  if (params) str = str.replace(/\{(\w+)\}/g, (_, k) => params[k] != null ? params[k] : '');
+  return str;
+}
+function applyI18n() {
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.documentElement.lang = currentLang;
+  const btn = document.getElementById('langToggle');
+  if (btn) btn.textContent = currentLang === 'zh' ? 'EN' : '中文';
+}
+function setLang(lang) {
+  currentLang = lang;
+  try { localStorage.setItem('gate-spcx-lang', lang); } catch {}
+  applyI18n();
+  // 触发重渲染（动态文本）
+  if (state.api) { renderHero(); renderSnapshotBar(); renderEstimator(); }
+}
+
 // ---------- 数据源 ----------
 const IPO_UPSTREAM = (pid) =>
   `https://www.gate.com/apiw/v2/launch/ipos/project-detail?sub_website_id=0&project_id=${pid}`;
@@ -592,9 +766,15 @@ function log(msg, kind) {
   if (kind === 'err') console.warn(`[${time}] ${msg}`);
   else console.log(`[${time}] ${msg}`);
 }
-function setStatus(kind, msg) {
-  $('statusBadge').className = 'status ' + (kind || '');
-  $('statusText').textContent = msg;
+function setStatus(kind /*, msg */) {
+  // 顶部状态徽章已移除；只更新页脚的"最后更新"
+  if (kind === 'ok') {
+    const el = document.getElementById('lastUpdated');
+    if (el) {
+      const time = new Date().toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
+      el.textContent = t('footer.lastUpdated', { time });
+    }
+  }
 }
 function showError(msg) {
   const el = $('err');
@@ -752,10 +932,10 @@ function estimate(api, inputs) {
 function buildPnl(spcx, actualCost, lockup, priceNow) {
   const rows = [];
   if (priceNow && isFinite(priceNow) && priceNow > 0) {
-    rows.push({ label: '现价', exit: priceNow });
+    rows.push({ label: t('pnl.row.spot'), key: 'spot', exit: priceNow });
   }
   [
-    { label: '成本价 590', exit: 590 },
+    { label: t('pnl.row.cost'), exit: 590 },
     { label: '-50%',  exit: 295 },
     { label: '-20%',  exit: 472 },
     { label: '+20%',  exit: 708 },
@@ -806,7 +986,7 @@ function renderEstimator() {
   const amountHint = $('amountHint');
   if (inputs.amount < 100) {
     amountEl.classList.add('invalid');
-    amountHint.textContent = `最低 100 ${inputs.pool}`;
+    amountHint.textContent = t('estimator.amountMin', { coin: inputs.pool });
     amountHint.classList.add('err');
   } else {
     amountEl.classList.remove('invalid');
@@ -820,24 +1000,28 @@ function renderEstimator() {
 
   // 结果卡片
   $('r-avg').textContent = fmtNum(r.userAvg) + ' ' + r.pool;
-  $('r-avg-sub').textContent = `= ${fmtNum(r.cost)} × (48 − ${inputs.hour.toFixed(2)}) / 48`;
+  $('r-avg-sub').textContent = t('result.avgFormula', { x: fmtNum(inputs.amount), h: inputs.hour.toFixed(2) });
 
   $('r-ratio').textContent = fmtPct(r.shareRatio * 100);
-  $('r-ratio-sub').textContent = r.note || `池当前加权总和 ${fmtNum(r.validNow)}`;
+  $('r-ratio-sub').textContent = r.note ? t('result.ratioEmpty')
+    : t('result.ratioPool', { v: fmtNum(r.validNow) });
 
   tweenNumber($('r-spcx'), r.spcx, { decimals: 4, suffix: ' SPCX', duration: 500 });
   $('r-spcx-sub').textContent = r.cappedByTop
-    ? `⚠️ 受单用户上限 ${r.userCap} 截断（原 ${fmtNum(r.spcxRaw, 4)}）`
-    : `原值 ${fmtNum(r.spcxRaw, 4)} · 上限 ${r.userCap}`;
+    ? t('result.spcxCapped', { cap: r.userCap, raw: fmtNum(r.spcxRaw, 4) })
+    : t('result.spcxRaw', { raw: fmtNum(r.spcxRaw, 4), cap: r.userCap });
 
   $('r-cost').textContent = fmtNum(r.actualCost) + ' ' + r.pool;
-  $('r-cost-sub').textContent =
-    `锁仓 ${fmtNum(r.lockup)} · 退款 ${fmtNum(r.refund)} · 资金利用率 ${(r.utilization * 100).toFixed(2)}%`;
+  $('r-cost-sub').textContent = t('result.costSub', {
+    lockup: fmtNum(r.lockup),
+    refund: fmtNum(r.refund),
+    util: (r.utilization * 100).toFixed(2) + '%',
+  });
 
   $('r-price').textContent = price == null ? '—' : fmtNum(price, 4);
   $('r-price-sub').textContent = price == null
-    ? '盘前 K-line 暂不可用'
-    : '假设单位：USDT · 最新收盘';
+    ? t('result.spotNoData')
+    : t('result.spotNote');
 
   // 预期盈亏大卡（按当前盘前价 - 实际消耗成本）
   const pCard = $('profitCard');
@@ -849,14 +1033,25 @@ function renderEstimator() {
     pCard.classList.toggle('positive', profit >= 0);
     pCard.classList.toggle('negative', profit < 0);
     tweenNumber($('profitValue'), profit, { decimals: 2, sign: true, suffix: ' ' + r.pool, duration: 700 });
+    const tokenRoiStr = (tokenRoi >= 0 ? '+' : '') + tokenRoi.toFixed(2) + '%';
+    const lockupRoiStr = (lockupRoi >= 0 ? '+' : '') + lockupRoi.toFixed(3) + '%';
     $('profitSub').innerHTML =
-      `<div>SPCX 涨跌 <b style="color:inherit">${tokenRoi >= 0 ? '+' : ''}${tokenRoi.toFixed(2)}%</b> · ` +
-      `锁仓 ${fmtNum(r.lockup)} 回报 <b style="color:inherit">${lockupRoi >= 0 ? '+' : ''}${lockupRoi.toFixed(3)}%</b></div>` +
-      `<div style="margin-top:4px;opacity:0.85">${fmtNum(r.spcx, 4)} SPCX × ${price.toFixed(2)} − 消耗 ${fmtNum(r.actualCost, 2)} = ${profit >= 0 ? '+' : ''}${fmtNum(profit, 2)} ${r.pool}</div>`;
+      `<div>${t('estimator.profitFormula', {
+        tokenRoi: `<b style="color:inherit">${tokenRoiStr}</b>`,
+        lockup: fmtNum(r.lockup),
+        lockupRoi: `<b style="color:inherit">${lockupRoiStr}</b>`,
+      })}</div>` +
+      `<div style="margin-top:4px;opacity:0.85">${t('estimator.profitDetail', {
+        spcx: fmtNum(r.spcx, 4),
+        price: price.toFixed(2),
+        cost: fmtNum(r.actualCost, 2),
+        profit: (profit >= 0 ? '+' : '') + fmtNum(profit, 2),
+        coin: r.pool,
+      })}</div>`;
   } else {
     pCard.classList.remove('positive', 'negative');
     $('profitValue').textContent = '—';
-    $('profitSub').textContent = price == null ? '盘前行情暂不可用' : '等待中签结果…';
+    $('profitSub').textContent = price == null ? t('estimator.profitNoPrice') : t('estimator.profitWaiting');
   }
 
   // 盈亏表
@@ -864,7 +1059,7 @@ function renderEstimator() {
   const body = $('pnlBody');
   body.innerHTML = rows.map(row => {
     const cls = row.profit >= 0 ? 'pos' : 'neg';
-    const highlight = row.label === '现价' ? ' class="highlight"' : '';
+    const highlight = row.key === 'spot' ? ' class="highlight"' : '';
     return `<tr${highlight}>
       <td>${row.label}</td>
       <td>${fmtNum(row.exit, 2)}</td>
@@ -882,7 +1077,7 @@ function renderChart() {
   const all = normalizeCandles(state.kline);
   const svg = $('chart');
   if (!all.length) {
-    svg.innerHTML = '<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">暂无盘前行情数据</text>';
+    svg.innerHTML = `<text x="400" y="110" fill="#8a92a6" text-anchor="middle" font-size="13">${t('chart.empty')}</text>`;
     ['cPrice','cOpen','cHigh','cLow'].forEach(id => $(id).textContent = '—');
     $('cDelta').textContent = '';
     return;
@@ -924,7 +1119,7 @@ function renderChart() {
   if (590 >= lo && 590 <= hi) {
     const yy = y(590).toFixed(1);
     ref590 = `<line x1="${pad.l}" x2="${W - pad.r}" y1="${yy}" y2="${yy}" stroke="${refColor}" stroke-dasharray="4 4" stroke-width="1"/>
-              <text x="${W - pad.r - 4}" y="${(+yy - 3).toFixed(1)}" fill="${refColor}" font-size="10" text-anchor="end">成本 590</text>`;
+              <text x="${W - pad.r - 4}" y="${(+yy - 3).toFixed(1)}" fill="${refColor}" font-size="10" text-anchor="end">${t('chart.refLine')}</text>`;
   }
 
   svg.innerHTML = `
@@ -963,8 +1158,8 @@ function renderHero() {
     $('heroRatio').textContent = (+d.subscription_ratio || 0).toFixed(2) + 'x';
     const endMs = (d.end_time || 0) * 1000;
     const remH = Math.max(0, (endMs - Date.now()) / 3_600_000);
-    if (Date.now() >= endMs) $('heroRemain').textContent = '认购已结束';
-    else $('heroRemain').textContent = `剩余 ${Math.floor(remH)}h ${Math.floor((remH%1)*60)}m`;
+    if (Date.now() >= endMs) $('heroRemain').textContent = t('hero.ended');
+    else $('heroRemain').textContent = t('hero.remain', { h: Math.floor(remH), m: Math.floor((remH%1)*60) });
   }
 
   const candles = normalizeCandles(state.kline);
@@ -982,7 +1177,7 @@ function renderHero() {
 }
 
 function renderSnapshotBar() {
-  if (!state.api) { $('snapshotBar').textContent = '加载中…'; return; }
+  if (!state.api) { $('snapshotBar').textContent = t('common.loading'); return; }
   const d = state.api.data;
   const products = d.products || [];
   const usdt = products.find(p => p.coin === 'USDT');
@@ -992,18 +1187,21 @@ function renderSnapshotBar() {
   const remainH = Math.max(0, (endMs - nowMs) / 3_600_000);
   const hh = Math.floor(remainH);
   const mm = Math.floor((remainH - hh) * 60);
-  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
+  const tstr = new Date().toLocaleTimeString(currentLang === 'zh' ? 'zh-CN' : 'en-US', { hour12: false });
 
-  const fmtPool = (p) => p ? `${p.coin} 池投入 <b>${fmtNum(p.invest_amount)}</b> · 认购比 <b>${(+p.subscription_ratio).toFixed(2)}x</b>` : '';
+  const fmtPool = (p) => p
+    ? `${t('snapshot.poolInvest', { coin: p.coin })} <b>${fmtNum(p.invest_amount)}</b> · ${t('snapshot.subRatio')} <b>${(+p.subscription_ratio).toFixed(2)}x</b>`
+    : '';
 
   $('snapshotBar').innerHTML = [
-    `<span>@ ${t}</span>`,
+    `<span>@ ${tstr}</span>`,
     `<span>${fmtPool(usdt)}</span>`,
     `<span>${fmtPool(gusd)}</span>`,
-    `<span>剩余 <b>${hh}h ${mm}m</b></span>`,
-    `<span>综合认购比 <b>${(+d.subscription_ratio).toFixed(2)}x</b></span>`,
+    `<span>${t('snapshot.remaining')} <b>${hh}h ${mm}m</b></span>`,
   ].join('');
-  $('windowRemain').textContent = nowMs >= endMs ? '（认购已结束）' : `（剩余 ${hh}h ${mm}m）`;
+  $('windowRemain').textContent = nowMs >= endMs
+    ? t('snapshot.windowEnded')
+    : t('snapshot.windowRemain', { h: hh, m: mm });
 
   // 时间进度条
   const startMs = (d.start_time || 0) * 1000;
@@ -1021,8 +1219,8 @@ function renderSnapshotBar() {
   };
   $('progressTimes').textContent = `${fmtShort(startMs)} → ${fmtShort(endMs)}`;
   $('progressRemain').textContent =
-    nowMs >= endMs ? '已结束'
-    : nowMs < startMs ? `${Math.ceil((startMs - nowMs)/3_600_000)}h 后开始`
+    nowMs >= endMs ? t('snapshot.endedShort')
+    : nowMs < startMs ? t('snapshot.notStarted', { h: Math.ceil((startMs - nowMs)/3_600_000) })
     : `${hh}h ${mm}m`;
 }
 
@@ -1054,48 +1252,28 @@ async function tickAll() {
   renderEstimator();
   renderChart();
 
-  const t = new Date().toLocaleTimeString('zh-CN', { hour12: false });
   if (any) {
     showError('');
-    const parts = [];
-    if (ipoR.status === 'fulfilled') parts.push('ipo✓');
-    else parts.push('ipo✗');
-    if (klineR.status === 'fulfilled') parts.push('kline✓');
-    else parts.push('kline✗');
-    setStatus('ok', `已更新 · ${parts.join(' ')} · ${t}`);
+    setStatus('ok', '');
   } else {
     if (state.lastIpoOk || state.lastKlineOk) {
-      const last = Math.max(state.lastIpoOk, state.lastKlineOk);
-      const ago = Math.round((Date.now() - last) / 1000);
-      setStatus('err', `本轮全部失败，保留 ${ago}s 前数据`);
       showError('');
     } else {
-      setStatus('err', '首次拉取失败');
-      showError('ipo / kline 全部数据源失败，见下方日志');
+      showError('ipo / kline ' + (currentLang === 'zh' ? '全部数据源失败' : 'all sources failed'));
     }
   }
 }
 
 function startLoop() {
   if (state.timer) clearInterval(state.timer);
-  if (state.cdTimer) clearInterval(state.cdTimer);
   tickAll();
-  state.nextAt = Date.now() + state.intervalSec * 1000;
-  state.timer = setInterval(() => {
-    tickAll();
-    state.nextAt = Date.now() + state.intervalSec * 1000;
-  }, state.intervalSec * 1000);
-  state.cdTimer = setInterval(() => {
-    const s = Math.max(0, Math.round((state.nextAt - Date.now()) / 1000));
-    $('countdown').textContent = ' · 下一次 ' + s + 's';
-  }, 250);
+  state.timer = setInterval(tickAll, state.intervalSec * 1000);
 }
 
 // ---------- 持久化 ----------
 function persist() {
   try {
     localStorage.setItem('gate-spcx-cfg-v2', JSON.stringify({
-      src: state.src, intervalSec: state.intervalSec, pid: state.pid,
       pool: (document.querySelector('input[name="pool"]:checked') || {}).value,
       amount: $('amount').value,
     }));
@@ -1104,32 +1282,15 @@ function persist() {
 function restore() {
   try {
     const s = JSON.parse(localStorage.getItem('gate-spcx-cfg-v2') || '{}');
-    if (s.src) state.src = s.src;
-    if (s.intervalSec) state.intervalSec = s.intervalSec;
-    if (s.pid) state.pid = s.pid;
     if (s.pool) {
       const el = document.querySelector(`input[name="pool"][value="${s.pool}"]`);
       if (el) el.checked = true;
     }
     if (s.amount) $('amount').value = s.amount;
   } catch {}
-  $('src').value = state.src;
-  $('interval').value = state.intervalSec;
-  $('pid').value = state.pid;
 }
 
 // ---------- 事件绑定 ----------
-$('apply').addEventListener('click', () => {
-  state.src = $('src').value;
-  state.intervalSec = Math.max(2, Number($('interval').value) || 10);
-  state.pid = Math.max(1, Number($('pid').value) || 2);
-  state.workingIpo = null;
-  state.workingKline = null;
-  state.hourInitialized = false;
-  persist();
-  startLoop();
-});
-
 ['amount', 'hour'].forEach(id => {
   $(id).addEventListener('input', () => { renderEstimator(); persist(); });
 });
@@ -1165,10 +1326,10 @@ document.querySelectorAll('.chart-range button').forEach(btn => {
   if (saved === 'light' || saved === 'dark') {
     document.documentElement.setAttribute('data-theme', saved);
   }
-  $('themeBtn').addEventListener('click', () => {
+  const btn = $('themeBtn');
+  if (btn) btn.addEventListener('click', () => {
     const cur = document.documentElement.getAttribute('data-theme');
     const sysDark = matchMedia('(prefers-color-scheme: dark)').matches;
-    // 循环: null -> 反系统 -> 反的反 -> null
     let next;
     if (!cur) next = sysDark ? 'light' : 'dark';
     else if (cur === 'dark') next = 'light';
@@ -1179,10 +1340,14 @@ document.querySelectorAll('.chart-range button').forEach(btn => {
       if (next) localStorage.setItem('gate-spcx-theme', next);
       else localStorage.removeItem('gate-spcx-theme');
     } catch {}
-    // 重绘图表（颜色变量已变）
     renderChart();
   });
 })();
+
+// i18n 初始化和切换
+applyI18n();
+const langBtn = document.getElementById('langToggle');
+if (langBtn) langBtn.addEventListener('click', () => setLang(currentLang === 'zh' ? 'en' : 'zh'));
 
 restore();
 setHour(Number($('hour').value) || 0);
