@@ -191,6 +191,17 @@
   .amount-formatted b { color:var(--c-text); font-weight:600; font-variant-numeric:tabular-nums; }
   .field .hint { font-size:11px; color:var(--c-sub); margin-top:6px; min-height:14px; }
   .field .hint.err { color:var(--c-error); }
+  .field .hint-info {
+    background:var(--c-primary-light); color:var(--c-primary);
+    padding:8px 12px; border-radius:8px; line-height:1.5;
+    border-left:3px solid var(--c-primary); margin-top:8px;
+  }
+  .info-tip {
+    display:inline-block; width:14px; height:14px; line-height:14px; text-align:center;
+    border-radius:50%; background:var(--c-primary-light); color:var(--c-primary);
+    font-size:10px; font-weight:700; cursor:help; margin-left:6px;
+    vertical-align:middle;
+  }
   .radio-row { display:flex; gap:8px; flex-wrap:wrap; }
   .radio-row label {
     flex:1; min-width:120px; display:inline-flex; align-items:center; gap:8px;
@@ -485,13 +496,18 @@
     </div>
 
     <div class="field">
-      <label class="ttl"><span data-i18n="estimator.hour">入场小时偏移</span> <span id="hourLabel" style="color:var(--text)">0.00h</span></label>
+      <label class="ttl">
+        <span data-i18n="estimator.hour">入场小时偏移</span>
+        <span id="hourLabel" style="color:var(--text)">0.00h</span>
+        <span class="info-tip" data-i18n-title="estimator.hourTip" title="">ⓘ</span>
+      </label>
       <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
       <div class="quick-btns">
         <button data-q="start" data-i18n="estimator.qStart">认购开始时</button>
         <button data-q="now" data-i18n="estimator.qNow">现在</button>
         <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h</button>
       </div>
+      <div class="hint hint-info" data-i18n="estimator.hourHint">模拟你在 48h 认购窗口的第几小时投入 · 越早投入加权均值越高，可获得 SPCX 越多</div>
     </div>
   </div>
 
@@ -597,6 +613,8 @@ const I18N = {
     'estimator.amountNote': '（≥ 100）',
     'estimator.amountMin': '最低 100 {coin}',
     'estimator.hour': '入场小时偏移',
+    'estimator.hourHint': '模拟你在 48h 认购窗口的第几小时投入 · 越早投入加权均值越高，可获得 SPCX 越多',
+    'estimator.hourTip': '默认按"认购开始时"（最理想情况）估算。你可以拖动滑块或点下方按钮模拟其他入场时机。',
     'estimator.qStart': '认购开始时',
     'estimator.qNow': '现在',
     'estimator.qLast': '结束前 1h',
@@ -672,6 +690,8 @@ const I18N = {
     'estimator.amountNote': '(≥ 100)',
     'estimator.amountMin': 'Minimum 100 {coin}',
     'estimator.hour': 'Entry Hour Offset',
+    'estimator.hourHint': 'Simulate which hour of the 48h subscription window you invest · earlier = higher weighted average = more SPCX',
+    'estimator.hourTip': 'Defaults to "At Start" (best case). Drag the slider or use buttons below to simulate other entry timings.',
     'estimator.qStart': 'At Start',
     'estimator.qNow': 'Now',
     'estimator.qLast': 'Last 1h',
@@ -732,6 +752,9 @@ function t(key, params) {
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    el.title = t(el.dataset.i18nTitle);
   });
   document.documentElement.lang = currentLang;
   const btn = document.getElementById('langToggle');
@@ -1316,10 +1339,9 @@ async function tickAll() {
     state.api = ipoR.value;
     state.lastIpoOk = Date.now();
     any = true;
-    // 首次成功时，把 slider 设为"现在"
+    // 首次默认按"认购开始时"（最理想情况）估算
     if (!state.hourInitialized) {
-      const d = state.api.data;
-      setHour(defaultHourOffset(d.start_time, d.end_time));
+      setHour(0);
       state.hourInitialized = true;
     }
   }
