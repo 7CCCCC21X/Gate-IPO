@@ -76,6 +76,11 @@
     transition:background .15s, border-color .15s;
   }
   .quick-btns button:hover { background:rgba(0,102,255,.14); border-color:rgba(0,102,255,.25); }
+  .quick-btns button.active {
+    background:var(--c-primary); color:#fff; border-color:var(--c-primary);
+    box-shadow:0 2px 8px rgba(0,102,255,.3);
+  }
+  .quick-btns button.active:hover { background:var(--c-primary-dark); }
   .card {
     background:var(--c-card); border:1px solid var(--c-border); border-radius:20px;
     padding:24px; margin-bottom:16px; box-shadow:var(--shadow);
@@ -171,6 +176,33 @@
     display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:12px;
   }
   .form-grid { margin-bottom:18px; }
+  /* 估算器左右两列 */
+  .estimator-layout {
+    display:grid; grid-template-columns:minmax(280px, 2fr) minmax(0, 3fr); gap:22px;
+    margin-bottom:14px;
+  }
+  .estimator-inputs { display:flex; flex-direction:column; gap:14px; }
+  .estimator-results { display:flex; flex-direction:column; gap:14px; }
+  .estimator-results .result-grid { margin-top:0; }
+  @media (max-width: 900px) {
+    .estimator-layout { grid-template-columns:1fr; gap:16px; }
+  }
+  /* 主输入（投入金额）视觉权重 */
+  .field-primary input[type="number"] {
+    font-size:22px; font-weight:800; padding:14px 16px; letter-spacing:-.3px;
+  }
+  .field-primary .ttl { font-size:13px; }
+  /* 次要输入（假设池子最终总投入） */
+  .field-secondary {
+    background:var(--c-card2); border:1px dashed var(--c-border);
+    border-radius:var(--radius); padding:12px 14px;
+  }
+  .field-secondary .ttl { font-size:11px; color:var(--c-sub); margin-bottom:6px; }
+  .field-secondary input[type="number"] {
+    font-size:13px; padding:8px 10px; background:var(--c-card);
+  }
+  /* 滑杆字段视觉强化 */
+  .field-slider { padding:4px 0; }
   .field label.ttl { display:block; color:var(--c-text); font-size:13px; font-weight:600; margin-bottom:8px; }
   .field input[type="number"] {
     width:100%; background:var(--c-card); color:var(--c-text);
@@ -671,54 +703,56 @@
 <section id="estimator" class="card">
   <h2 data-i18n="estimator.title">收益预估</h2>
 
-  <div class="form-grid">
-    <div class="field">
-      <label class="ttl" data-i18n="estimator.pool">选择池子</label>
-      <div class="radio-row">
-        <label><input type="radio" name="pool" value="USDT" checked> <span data-i18n="estimator.poolUsdt">USDT 池 (70%)</span></label>
-        <label><input type="radio" name="pool" value="GUSD"> <span data-i18n="estimator.poolGusd">GUSD 池 (30%)</span></label>
-        <label><input type="radio" name="pool" value="compare"> <span data-i18n="estimator.poolCompare">对比两者</span></label>
+  <div class="estimator-layout">
+    <div class="estimator-inputs">
+      <div class="field">
+        <label class="ttl" data-i18n="estimator.pool">选择池子</label>
+        <div class="radio-row">
+          <label><input type="radio" name="pool" value="USDT" checked> <span data-i18n="estimator.poolUsdt">USDT 池 (70%)</span></label>
+          <label><input type="radio" name="pool" value="GUSD"> <span data-i18n="estimator.poolGusd">GUSD 池 (30%)</span></label>
+          <label><input type="radio" name="pool" value="compare"> <span data-i18n="estimator.poolCompare">对比两者</span></label>
+        </div>
+        <div class="hint" id="poolHint"></div>
       </div>
-      <div class="hint" id="poolHint"></div>
+
+      <div class="field field-primary">
+        <label class="ttl"><span data-i18n="estimator.amount">投入金额</span> <span class="muted" data-i18n="estimator.amountNote">（≥ 100）</span></label>
+        <div class="input-with-suffix">
+          <input id="amount" type="number" min="100" step="1" value="10000" />
+          <span id="amountSuffix" class="suffix">USDT</span>
+        </div>
+        <div class="amount-formatted" id="amountFormatted"></div>
+        <div class="hint" id="amountHint"></div>
+      </div>
+
+      <div class="field field-slider">
+        <label class="ttl">
+          <span data-i18n="estimator.hour">投入时间</span>
+          <span id="hourLabel" class="hour-chip">—</span>
+        </label>
+        <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
+        <div class="quick-btns">
+          <button data-q="start" data-i18n="estimator.qStart">开始时投入</button>
+          <button data-q="now" data-i18n="estimator.qNow">现在投入</button>
+          <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h 投入</button>
+        </div>
+        <div class="hint hint-info" data-i18n="estimator.hourHint">按 48 小时平均锁仓计算，越早投入权重越高</div>
+      </div>
+
+      <div class="field field-secondary">
+        <label class="ttl">
+          <span data-i18n="estimator.finalPool">假设池子最终总投入</span>
+          <button type="button" id="resetFinalBtn" class="link-btn" data-i18n="estimator.useLive">使用实时值</button>
+        </label>
+        <div class="input-with-suffix">
+          <input id="finalInvest" type="number" step="1000" min="0" placeholder="—" />
+          <span id="finalInvestSuffix" class="suffix">USDT</span>
+        </div>
+        <div class="amount-formatted" id="finalInvestFormatted"></div>
+      </div>
     </div>
 
-    <div class="field">
-      <label class="ttl"><span data-i18n="estimator.amount">投入金额</span> <span class="muted" data-i18n="estimator.amountNote">（≥ 100）</span></label>
-      <div class="input-with-suffix">
-        <input id="amount" type="number" min="100" step="1" value="10000" />
-        <span id="amountSuffix" class="suffix">USDT</span>
-      </div>
-      <div class="amount-formatted" id="amountFormatted"></div>
-      <div class="hint" id="amountHint"></div>
-    </div>
-
-    <div class="field">
-      <label class="ttl">
-        <span data-i18n="estimator.finalPool">假设池子最终总投入</span>
-        <button type="button" id="resetFinalBtn" class="link-btn" data-i18n="estimator.useLive">使用实时值</button>
-      </label>
-      <div class="input-with-suffix">
-        <input id="finalInvest" type="number" step="1000" min="0" placeholder="—" />
-        <span id="finalInvestSuffix" class="suffix">USDT</span>
-      </div>
-      <div class="amount-formatted" id="finalInvestFormatted"></div>
-    </div>
-
-    <div class="field">
-      <label class="ttl">
-        <span data-i18n="estimator.hour">投入时间</span>
-        <span id="hourLabel" class="hour-chip">—</span>
-      </label>
-      <input id="hour" type="range" min="0" max="48" step="0.01" value="0" />
-      <div class="quick-btns">
-        <button data-q="start" data-i18n="estimator.qStart">开始时投入</button>
-        <button data-q="now" data-i18n="estimator.qNow">现在投入</button>
-        <button data-q="last1h" data-i18n="estimator.qLast">结束前 1h 投入</button>
-      </div>
-      <div class="hint hint-info" data-i18n="estimator.hourHint">按 48 小时平均锁仓计算，越早投入权重越高</div>
-    </div>
-  </div>
-
+    <div class="estimator-results">
   <div id="profitCard" class="profit-card">
     <div class="profit-label" data-i18n="estimator.profitLabel">当前盘前价下的预计盈亏</div>
     <div id="profitValue" class="profit-value">—</div>
@@ -794,6 +828,8 @@
       </div>
     </div>
   </div>
+    </div><!-- /.estimator-results -->
+  </div><!-- /.estimator-layout -->
 
   <details class="detail-panel">
     <summary>
@@ -1542,6 +1578,19 @@ function syncFormMeta(inputs) {
   else if (h > 47) hourText = t('estimator.hourLast', { h: (48 - h).toFixed(1) });
   else hourText = t('estimator.hourMid', { h: h.toFixed(1) });
   $('hourLabel').textContent = hourText;
+
+  // 活动快捷按钮高亮
+  let activeQ = null;
+  if (h < 0.25) activeQ = 'start';
+  else if (h > 47) activeQ = 'last1h';
+  else if (state.api) {
+    const d = state.api.data;
+    const nowH = defaultHourOffset(d.start_time, d.end_time);
+    if (Math.abs(h - nowH) < 0.5 && nowH > 0.25 && nowH < 47) activeQ = 'now';
+  }
+  document.querySelectorAll('.quick-btns button').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-q') === activeQ);
+  });
 }
 
 function renderEstimator() {
