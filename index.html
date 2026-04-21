@@ -349,6 +349,18 @@
   </div>
 </div>
 
+<section class="card">
+  <h2>当前池子快照 <span id="windowRemain" class="muted"></span></h2>
+  <div class="snapshot-bar" id="snapshotBar">加载中…</div>
+  <div class="progress-wrap">
+    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-meta">
+      <span>认购窗口进度 <b id="progressPct">—</b> · <span id="progressTimes">—</span></span>
+      <span>剩余 <b id="progressRemain">—</b></span>
+    </div>
+  </div>
+</section>
+
 <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px;">
   <span id="statusBadge" class="status">
     <span class="dot"></span>
@@ -466,18 +478,6 @@
     <button data-r="60">近 1h</button>
     <button data-r="240" class="active">近 4h</button>
     <button data-r="500">全部</button>
-  </div>
-</section>
-
-<section class="card">
-  <h2>当前池子快照 <span id="windowRemain" class="muted"></span></h2>
-  <div class="snapshot-bar" id="snapshotBar">加载中…</div>
-  <div class="progress-wrap">
-    <div class="progress-bg"><div class="progress-bar" id="progressBar"></div></div>
-    <div class="progress-meta">
-      <span>综合认购进度 <b id="progressPct">—</b></span>
-      <span>超额倍率 <b id="progressRatio">—</b></span>
-    </div>
   </div>
 </section>
 
@@ -1007,11 +1007,25 @@ function renderSnapshotBar() {
   ].join('');
   $('windowRemain').textContent = nowMs >= endMs ? '（认购已结束）' : `（剩余 ${hh}h ${mm}m）`;
 
-  const combined = +d.combined_progress_rate || 0;
-  const ratio = +d.subscription_ratio || 0;
-  $('progressBar').style.width = Math.min(100, combined) + '%';
-  $('progressPct').textContent = combined.toFixed(2) + '%';
-  $('progressRatio').textContent = ratio.toFixed(2) + 'x';
+  // 时间进度条
+  const startMs = (d.start_time || 0) * 1000;
+  let timePct = 0;
+  if (endMs > startMs) {
+    timePct = clamp((nowMs - startMs) / (endMs - startMs) * 100, 0, 100);
+  }
+  $('progressBar').style.width = timePct.toFixed(2) + '%';
+  $('progressPct').textContent = timePct.toFixed(2) + '%';
+  const fmtShort = (ms) => {
+    if (!ms) return '—';
+    const dt = new Date(ms);
+    const m = (n) => String(n).padStart(2, '0');
+    return `${dt.getMonth()+1}/${dt.getDate()} ${m(dt.getHours())}:${m(dt.getMinutes())}`;
+  };
+  $('progressTimes').textContent = `${fmtShort(startMs)} → ${fmtShort(endMs)}`;
+  $('progressRemain').textContent =
+    nowMs >= endMs ? '已结束'
+    : nowMs < startMs ? `${Math.ceil((startMs - nowMs)/3_600_000)}h 后开始`
+    : `${hh}h ${mm}m`;
 }
 
 // ---------- tick 循环 ----------
