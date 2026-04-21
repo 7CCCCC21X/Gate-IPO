@@ -177,6 +177,26 @@
   .result-grid .card .value { font-size:18px; font-weight:800; letter-spacing:-.3px; color:var(--c-text); }
   .result-grid .card .value.green { color:var(--c-success); }
   .result-grid .card .value.red { color:var(--c-error); }
+  /* 可编辑价格卡 */
+  .price-card input[type="number"] {
+    width:100%; background:transparent; color:var(--c-text);
+    border:none; outline:none; padding:0; margin:6px 0 8px;
+    font-size:18px; font-weight:800; letter-spacing:-.3px;
+    font-variant-numeric:tabular-nums;
+  }
+  .price-card input[type="number"]:focus { color:var(--c-primary); }
+  .price-card.manual input[type="number"] { color:var(--c-warn); }
+  .link-btn {
+    background:none; border:none; color:var(--c-primary); cursor:pointer;
+    font-size:11px; font-weight:600; padding:0; text-decoration:underline;
+    text-underline-offset:2px;
+  }
+  .link-btn:hover { color:var(--c-primary-dark); }
+  .binance-link {
+    display:inline-flex; align-items:center; color:var(--c-sub); text-decoration:none;
+    font-size:11px; font-weight:500; transition:color .15s;
+  }
+  .binance-link:hover { color:#F0B90B; }
   /* 头条：预计盈亏大卡 */
   .profit-card {
     margin:16px 0 4px; padding:20px; border-radius:var(--radius);
@@ -426,7 +446,20 @@
     <div class="card"><div class="label" data-i18n="result.avg">48h 加权均值</div><div id="r-avg" class="value">—</div><div id="r-avg-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.spcx">预计获得 SPCX</div><div id="r-spcx" class="value">—</div><div id="r-spcx-sub" class="sub"></div></div>
     <div class="card"><div class="label" data-i18n="result.cost">认购成本</div><div id="r-cost" class="value">—</div><div id="r-cost-sub" class="sub"></div></div>
-    <div class="card"><div class="label" data-i18n="result.spotPrice">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub" data-i18n="result.spotNote">假设单位：USDT</div></div>
+    <div class="card price-card">
+      <div class="label" style="display:flex;justify-content:space-between;align-items:center">
+        <span data-i18n="result.spotPrice">当前预上市价</span>
+        <button type="button" id="resetPriceBtn" class="link-btn" data-i18n="result.resetPrice">重置实时价</button>
+      </div>
+      <input id="r-price" type="number" step="0.0001" min="0" placeholder="—" />
+      <div class="sub" id="r-price-sub">
+        <a href="https://web3.binance.com/zh-CN/token/sol/PreANxuXjsy2pvisWWMNB6YaJNzr7681wJJr2rHsfTh?ref=XIAOCC"
+           target="_blank" rel="noopener" class="binance-link">
+          <svg viewBox="0 0 32 32" width="13" height="13" style="vertical-align:-2px;margin-right:4px"><path fill="#F0B90B" d="M9.207 13.95l6.79-6.79 6.794 6.793 3.95-3.95L15.997 3.26 5.257 14l3.95-3.95zM3.26 15.997l3.95-3.95 3.95 3.95-3.95 3.95zm5.947 2.05l6.79 6.793 6.794-6.793 3.952 3.948-.002.002-10.744 10.745-10.74-10.738-.005-.006zm15.74-2.05l3.95-3.95 3.95 3.95-3.95 3.95zM20.005 15.997h-.002L15.997 12l-2.962 2.962-.34.34-.703.704-.005.005.005.005 4.005 4.004 4.008-4.008.002-.002z"/></svg>
+          <span data-i18n="result.binanceRef">参考币安钱包行情</span>
+        </a>
+      </div>
+    </div>
   </div>
 
   <h3><span data-i18n="pnl.title">盈亏表</span> <span id="pnlSubTitle" style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px" data-i18n="pnl.subtitle">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
@@ -541,6 +574,8 @@ const I18N = {
     'result.spotPrice': '当前预上市价',
     'result.spotNote': '假设单位：USDT · 最新收盘',
     'result.spotNoData': '盘前 K-line 暂不可用',
+    'result.resetPrice': '重置实时价',
+    'result.binanceRef': '参考币安钱包行情',
     'pnl.title': '盈亏表',
     'pnl.subtitle': '退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）',
     'pnl.col.exit': '退出价',
@@ -612,6 +647,8 @@ const I18N = {
     'result.spotPrice': 'Current Pre-Market Price',
     'result.spotNote': 'Assumed unit: USDT · Latest close',
     'result.spotNoData': 'Pre-market K-line unavailable',
+    'result.resetPrice': 'Reset to live',
+    'result.binanceRef': 'Binance Wallet quote',
     'pnl.title': 'P&L Table',
     'pnl.subtitle': 'Exit price × SPCX − actual cost (excess is refunded)',
     'pnl.col.exit': 'Exit',
@@ -693,6 +730,7 @@ const state = {
   lastIpoOk: 0,
   lastKlineOk: 0,
   hourInitialized: false,
+  priceTouched: false,  // 用户是否手动改过价格
   timer: null,
   cdTimer: null,
   nextAt: 0,
@@ -933,15 +971,7 @@ function buildPnl(spcx, actualCost, lockup, priceNow) {
   if (priceNow && isFinite(priceNow) && priceNow > 0) {
     rows.push({ label: t('pnl.row.spot'), key: 'spot', exit: priceNow });
   }
-  [
-    { label: t('pnl.row.cost'), exit: 590 },
-    { label: '-50%',  exit: 295 },
-    { label: '-20%',  exit: 472 },
-    { label: '+20%',  exit: 708 },
-    { label: '+50%',  exit: 885 },
-    { label: '+100%', exit: 1180 },
-    { label: '+300%', exit: 2360 },
-  ].forEach(r => rows.push(r));
+  rows.push({ label: t('pnl.row.cost'), exit: 590 });
   return rows.map(r => {
     const revenue = r.exit * spcx;
     const profit = revenue - actualCost;            // 实际盈亏：相对消耗
@@ -978,7 +1008,19 @@ function renderEstimator() {
   if (!state.api) return;
   const inputs = readInputs();
   const r = estimate(state.api, inputs);
-  const price = latestClose(state.kline);
+  const livePrice = latestClose(state.kline);
+  // 同步实时价到输入框（用户没手动改过时）
+  const priceEl = $('r-price');
+  const priceCard = priceEl.closest('.price-card');
+  if (!state.priceTouched && livePrice != null) {
+    priceEl.value = livePrice.toFixed(4);
+    priceCard.classList.remove('manual');
+  } else if (state.priceTouched) {
+    priceCard.classList.add('manual');
+  }
+  // 实际用于计算的价格：以输入框当前值为准
+  const inputPrice = parseFloat(priceEl.value);
+  const price = isFinite(inputPrice) && inputPrice > 0 ? inputPrice : livePrice;
 
   // 输入校验
   const amountEl = $('amount');
@@ -1013,10 +1055,7 @@ function renderEstimator() {
     util: (r.utilization * 100).toFixed(2) + '%',
   });
 
-  $('r-price').textContent = price == null ? '—' : fmtNum(price, 4);
-  $('r-price-sub').textContent = price == null
-    ? t('result.spotNoData')
-    : t('result.spotNote');
+  // 价格输入框由上面同步，子标签保持币安链接 — 不在这里覆盖
 
   // 预期盈亏大卡（按当前盘前价 - 实际消耗成本）
   const pCard = $('profitCard');
@@ -1288,6 +1327,18 @@ function restore() {
 // ---------- 事件绑定 ----------
 ['amount', 'hour'].forEach(id => {
   $(id).addEventListener('input', () => { renderEstimator(); persist(); });
+});
+
+$('r-price').addEventListener('input', () => {
+  state.priceTouched = true;
+  renderEstimator();
+});
+
+$('resetPriceBtn').addEventListener('click', () => {
+  state.priceTouched = false;
+  const live = latestClose(state.kline);
+  if (live != null) $('r-price').value = live.toFixed(4);
+  renderEstimator();
 });
 document.querySelectorAll('input[name="pool"]').forEach(el => {
   el.addEventListener('change', () => { renderEstimator(); persist(); });
