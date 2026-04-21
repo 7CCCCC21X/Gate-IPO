@@ -311,9 +311,16 @@
     <div class="card"><div class="label">当前预上市价</div><div id="r-price" class="value">—</div><div id="r-price-sub" class="sub">假设单位：USDT</div></div>
   </div>
 
-  <h3>盈亏表（按退出价 × SPCX − 成本）</h3>
+  <h3>盈亏表 <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--c-sub);font-size:11px">退出时按盘前价 × SPCX − 实际消耗成本（超额部分会退款）</span></h3>
   <table class="pnl" id="pnlTable">
-    <thead><tr><th>退出价</th><th>价格 (USDT)</th><th>收入</th><th>盈亏</th><th>ROI</th></tr></thead>
+    <thead><tr>
+      <th>退出价</th>
+      <th>价格 (USDT)</th>
+      <th>收入</th>
+      <th>盈亏</th>
+      <th title="相对实际消耗成本的涨跌">币价 ROI</th>
+      <th title="相对锁仓资金的回报率">锁仓 ROI</th>
+    </tr></thead>
     <tbody id="pnlBody"></tbody>
   </table>
 </section>
@@ -570,14 +577,23 @@ function estimate(api, inputs) {
   const cappedByTop = spcxRaw > userCap;
   const spcx = Math.min(spcxRaw, userCap);
 
+  // 超额认购退款机制：实际只消耗 spcx × 单价，剩余退款
+  const actualCost = spcx * price;
+  const lockup = X;
+  const refund = Math.max(0, lockup - actualCost);
+  const utilization = lockup > 0 ? (actualCost / lockup) : 0;
+
   return {
     userAvg, validNow, investNow, shareRatio, spcxRaw, spcx, cappedByTop,
-    cost: X, pool: inputs.pool, poolTotal, userCap, price, note,
+    lockup, actualCost, refund, utilization,
+    cost: actualCost,  // 兼容旧字段名
+    pool: inputs.pool, poolTotal, userCap, price, note,
   };
 }
 
 // ---------- 盈亏表 ----------
-function buildPnl(spcx, cost, priceNow) {
+// spcx: 中签数量, actualCost: 实际消耗(=spcx*590), lockup: 锁仓金额(用户输入), priceNow: 现价
+function buildPnl(spcx, actualCost, lockup, priceNow) {
   const rows = [];
   if (priceNow && isFinite(priceNow) && priceNow > 0) {
     rows.push({ label: '现价', exit: priceNow });
@@ -593,9 +609,10 @@ function buildPnl(spcx, cost, priceNow) {
   ].forEach(r => rows.push(r));
   return rows.map(r => {
     const revenue = r.exit * spcx;
-    const profit = revenue - cost;
-    const roiPct = cost > 0 ? (profit / cost) * 100 : 0;
-    return { ...r, revenue, profit, roiPct };
+    const profit = revenue - actualCost;            // 实际盈亏：相对消耗
+    const tokenRoi = actualCost > 0 ? (profit / actualCost) * 100 : 0;  // SPCX 本身的涨跌
+    const lockupRoi = lockup > 0 ? (profit / lockup) * 100 : 0;          // 相对锁仓资金的回报
+    return { ...r, revenue, profit, tokenRoi, lockupRoi };
   });
 }
 
@@ -654,27 +671,30 @@ function renderEstimator() {
     ? `⚠️ 受单用户上限 ${r.userCap} 截断（原 ${fmtNum(r.spcxRaw, 4)}）`
     : `原值 ${fmtNum(r.spcxRaw, 4)} · 上限 ${r.userCap}`;
 
-  $('r-cost').textContent = fmtNum(r.cost) + ' ' + r.pool;
-  $('r-cost-sub').textContent = `${r.pool} 池 · 单价 ${r.price}`;
+  $('r-cost').textContent = fmtNum(r.actualCost) + ' ' + r.pool;
+  $('r-cost-sub').textContent =
+    `锁仓 ${fmtNum(r.lockup)} · 退款 ${fmtNum(r.refund)} · 资金利用率 ${(r.utilization * 100).toFixed(2)}%`;
 
   $('r-price').textContent = price == null ? '—' : fmtNum(price, 4);
   $('r-price-sub').textContent = price == null
     ? '盘前 K-line 暂不可用'
     : '假设单位：USDT · 最新收盘';
 
-  // 预期盈亏大卡（按当前盘前价计算）
+  // 预期盈亏大卡（按当前盘前价 - 实际消耗成本）
   const pCard = $('profitCard');
   if (price != null && r.spcx > 0) {
     const revenue = price * r.spcx;
-    const profit = revenue - r.cost;
-    const roi = r.cost > 0 ? (profit / r.cost * 100) : 0;
+    const profit = revenue - r.actualCost;
+    const tokenRoi = r.actualCost > 0 ? (profit / r.actualCost * 100) : 0;
+    const lockupRoi = r.lockup > 0 ? (profit / r.lockup * 100) : 0;
     pCard.classList.toggle('positive', profit >= 0);
     pCard.classList.toggle('negative', profit < 0);
     $('profitValue').textContent =
-      (profit >= 0 ? '+' : '') + fmtNum(profit, 2) + ' ' + r.pool +
-      '  (' + (roi >= 0 ? '+' : '') + roi.toFixed(2) + '%)';
-    $('profitSub').textContent =
-      `预计 ${fmtNum(r.spcx, 4)} SPCX × 现价 ${price.toFixed(4)} = 收入 ${fmtNum(revenue, 2)} ${r.pool}`;
+      (profit >= 0 ? '+' : '') + fmtNum(profit, 2) + ' ' + r.pool;
+    $('profitSub').innerHTML =
+      `<div>SPCX 涨跌 <b style="color:inherit">${tokenRoi >= 0 ? '+' : ''}${tokenRoi.toFixed(2)}%</b> · ` +
+      `锁仓 ${fmtNum(r.lockup)} 回报 <b style="color:inherit">${lockupRoi >= 0 ? '+' : ''}${lockupRoi.toFixed(3)}%</b></div>` +
+      `<div style="margin-top:4px;opacity:0.85">${fmtNum(r.spcx, 4)} SPCX × ${price.toFixed(2)} − 消耗 ${fmtNum(r.actualCost, 2)} = ${profit >= 0 ? '+' : ''}${fmtNum(profit, 2)} ${r.pool}</div>`;
   } else {
     pCard.classList.remove('positive', 'negative');
     $('profitValue').textContent = '—';
@@ -682,7 +702,7 @@ function renderEstimator() {
   }
 
   // 盈亏表
-  const rows = buildPnl(r.spcx, r.cost, price);
+  const rows = buildPnl(r.spcx, r.actualCost, r.lockup, price);
   const body = $('pnlBody');
   body.innerHTML = rows.map(row => {
     const cls = row.profit >= 0 ? 'pos' : 'neg';
@@ -692,7 +712,8 @@ function renderEstimator() {
       <td>${fmtNum(row.exit, 2)}</td>
       <td>${fmtNum(row.revenue, 2)}</td>
       <td class="${cls}">${row.profit >= 0 ? '+' : ''}${fmtNum(row.profit, 2)}</td>
-      <td class="${cls}">${row.roiPct >= 0 ? '+' : ''}${row.roiPct.toFixed(2)}%</td>
+      <td class="${cls}">${row.tokenRoi >= 0 ? '+' : ''}${row.tokenRoi.toFixed(2)}%</td>
+      <td class="${cls}">${row.lockupRoi >= 0 ? '+' : ''}${row.lockupRoi.toFixed(3)}%</td>
     </tr>`;
   }).join('');
 }
