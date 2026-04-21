@@ -543,6 +543,15 @@
   .hero-tags .tag b {
     color:var(--c-text); font-weight:700; font-variant-numeric:tabular-nums;
   }
+  .hero-tags .tag.tag-premium {
+    background:var(--c-primary-light); border-color:transparent;
+  }
+  .hero-tags .tag.tag-premium.up   { background:var(--c-success-bg); }
+  .hero-tags .tag.tag-premium.down { background:var(--c-error-bg); }
+  .hero-tags .tag.tag-premium.up b   { color:var(--c-success); font-size:13px; }
+  .hero-tags .tag.tag-premium.down b { color:var(--c-error);   font-size:13px; }
+  .hero-tags .tag.tag-premium span { color:var(--c-text); font-weight:600; }
+  .hero-tags .tag.tag-muted { opacity:0.7; }
   @media (max-width: 640px) {
     .hero { padding:18px; }
     .hero-top { gap:14px; }
@@ -646,10 +655,14 @@
     </div>
   </div>
   <div class="hero-tags">
-    <span class="tag"><span data-i18n="hero.valuation">隐含估值</span> <b id="heroVal" class="skeleton">$0.00T</b></span>
     <span class="tag"><span data-i18n="hero.price">成本价</span> <b id="heroPrice">590 USDT</b></span>
-    <span class="tag"><span data-i18n="hero.oversub">综合超募</span> <b id="heroRatio" class="skeleton">0.00x</b></span>
+    <span class="tag tag-premium" id="heroPremiumTag">
+      <span data-i18n="hero.premium">当前溢价</span>
+      <b id="heroPremium" class="skeleton">+0.00%</b>
+    </span>
     <span class="tag" id="heroRemainTag"><span data-i18n="hero.remainLabel">剩余</span> <b id="heroRemain" class="skeleton">— —</b></span>
+    <span class="tag"><span data-i18n="hero.oversub">综合超募</span> <b id="heroRatio" class="skeleton">0.00x</b></span>
+    <span class="tag tag-muted"><span data-i18n="hero.valuation">隐含估值</span> <b id="heroVal" class="skeleton">$0.00T</b></span>
   </div>
 </div>
 
@@ -916,6 +929,7 @@ const I18N = {
     'hero.ended': '已结束',
     'hero.price': '成本价',
     'hero.oversub': '综合超募',
+    'hero.premium': '当前溢价',
     'snapshot.title': '当前池子数据',
     'snapshot.poolTotal': '当前总投入',
     'snapshot.poolRatio': '当前认购比',
@@ -1021,6 +1035,7 @@ const I18N = {
     'hero.valuation': 'Implied Valuation',
     'hero.price': 'Issue Price',
     'hero.oversub': 'Oversubscribed',
+    'hero.premium': 'Premium',
     'hero.spot': 'Current Pre-Market Price',
     'hero.remain': '{h}h {m}m',
     'hero.remainLabel': 'Remaining',
@@ -1765,6 +1780,15 @@ function renderHero() {
     const dEl = $('heroDelta');
     dEl.textContent = (delta >= 0 ? '+' : '') + delta.toFixed(2) + ' (' + (delta >= 0 ? '+' : '') + pct.toFixed(2) + '%)';
     dEl.className = 'delta ' + (Math.abs(delta) < 1e-6 ? 'flat' : (delta >= 0 ? 'up' : 'down'));
+
+    // 当前溢价：相对成本价 590 的涨幅
+    const premiumEl = $('heroPremium');
+    const premiumTag = $('heroPremiumTag');
+    premiumEl.classList.remove('skeleton');
+    const premiumPct = ((last - 590) / 590) * 100;
+    premiumEl.textContent = (premiumPct >= 0 ? '+' : '') + premiumPct.toFixed(2) + '%';
+    premiumTag.classList.remove('up', 'down');
+    if (Math.abs(premiumPct) > 0.01) premiumTag.classList.add(premiumPct > 0 ? 'up' : 'down');
   }
 }
 
