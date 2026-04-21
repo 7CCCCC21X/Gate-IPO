@@ -84,6 +84,34 @@
   .result-grid .card { transition:border-color .15s, transform .15s; }
   .result-grid .card:hover { transform:translateY(-2px); }
   svg#chart path { transition:d .25s ease; }
+  /* 骨架屏 */
+  .skeleton {
+    background:linear-gradient(90deg, var(--c-card2) 0%, var(--c-border) 50%, var(--c-card2) 100%);
+    background-size:200% 100%; animation:skeleton 1.4s infinite; border-radius:6px;
+    color:transparent !important;
+  }
+  @keyframes skeleton { 0% { background-position:200% 0 } 100% { background-position:-200% 0 } }
+  /* 设置折叠 */
+  details.settings { margin-bottom:14px; }
+  details.settings > summary {
+    list-style:none; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    color:var(--c-sub); font-size:12px; padding:6px 12px; border-radius:999px;
+    background:var(--c-card); border:1px solid var(--c-border);
+    transition:border-color .15s, color .15s;
+  }
+  details.settings > summary::-webkit-details-marker { display:none; }
+  details.settings > summary:hover { border-color:var(--c-primary); color:var(--c-primary); }
+  details.settings[open] > summary { background:var(--c-primary-light); color:var(--c-primary); border-color:var(--c-primary); }
+  details.settings .controls { margin-top:12px; padding:14px; background:var(--c-card2); border-radius:var(--radius); border:1px solid var(--c-border); }
+  /* 盈亏大卡过渡 */
+  .profit-card { transition:background .35s ease, border-color .35s ease, transform .25s ease; }
+  /* 注脚 */
+  .footnote {
+    text-align:center; font-size:11px; color:var(--c-sub); padding:24px 12px 12px;
+    line-height:1.7;
+  }
+  .footnote a { color:var(--c-primary); text-decoration:none; }
+  .footnote a:hover { text-decoration:underline; }
   .card .label { color:var(--muted); font-size:12px; margin-bottom:6px; }
   .card .value { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
   .card .sub { color:var(--muted); font-size:12px; margin-top:4px; }
@@ -314,15 +342,15 @@
   <div class="hero-main">
     <div class="hero-title">Gate SpaceX Pre-IPO <span class="badge">收益预估</span></div>
     <div class="hero-meta">
-      <span>隐含估值 <b id="heroVal">—</b></span>
+      <span>隐含估值 <b id="heroVal" class="skeleton">$0.00T</b></span>
       <span>认购单价 <b id="heroPrice">590 USDT</b></span>
-      <span>综合超额 <b id="heroRatio">—</b></span>
-      <span id="heroRemain">剩余 —</span>
+      <span>综合超额 <b id="heroRatio" class="skeleton">0.00x</b></span>
+      <span id="heroRemain" class="skeleton">剩余 ——</span>
     </div>
   </div>
   <div class="hero-price">
     <div class="lbl">当前盘前价</div>
-    <div class="val" id="heroSpot">—</div>
+    <div class="val skeleton" id="heroSpot">000.0000</div>
     <div id="heroDelta" class="delta flat">—</div>
   </div>
 </div>
@@ -336,21 +364,24 @@
   <button id="themeBtn" class="theme-toggle" title="切换主题">🌓</button>
 </div>
 
-<div class="controls">
-  <label>数据源
-    <select id="src">
-      <option value="codetabs">codetabs.com（推荐）</option>
-      <option value="local">本地代理 /api</option>
-      <option value="auto">自动回退</option>
-      <option value="allorigins">allorigins.win</option>
-      <option value="corsproxy">corsproxy.io</option>
-      <option value="direct">直连</option>
-    </select>
-  </label>
-  <label>刷新 <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒</label>
-  <label>项目 ID <input id="pid" type="number" min="1" value="2" style="width:70px" /></label>
-  <button id="apply">应用</button>
-</div>
+<details class="settings">
+  <summary>⚙ 高级设置</summary>
+  <div class="controls">
+    <label>数据源
+      <select id="src">
+        <option value="codetabs">codetabs.com（推荐）</option>
+        <option value="local">本地代理 /api</option>
+        <option value="auto">自动回退</option>
+        <option value="allorigins">allorigins.win</option>
+        <option value="corsproxy">corsproxy.io</option>
+        <option value="direct">直连</option>
+      </select>
+    </label>
+    <label>刷新 <input id="interval" type="number" min="2" max="600" value="10" style="width:70px" /> 秒</label>
+    <label>项目 ID <input id="pid" type="number" min="1" value="2" style="width:70px" /></label>
+    <button id="apply">应用</button>
+  </div>
+</details>
 
 <div id="err" class="err-box"></div>
 
@@ -457,6 +488,11 @@
 </section>
 
 <div class="log" id="log"></div>
+
+<div class="footnote">
+  数据来自 <a href="https://www.gate.com/launchpad" target="_blank" rel="noopener">Gate Launchpad</a> 与 <a href="https://dquery.sintral.io" target="_blank" rel="noopener">Sintral</a>，仅供参考。<br>
+  中签率基于当前 <code>valid_invest_amount</code> 快照估算，最终分配以官方为准；超额部分按规则退款。
+</div>
 </div>  <!-- .page -->
 
 <script>
@@ -932,6 +968,7 @@ function renderChart() {
 function renderHero() {
   const d = state.api && state.api.data;
   if (d) {
+    ['heroVal', 'heroRatio', 'heroRemain'].forEach(id => $(id).classList.remove('skeleton'));
     $('heroVal').textContent = fmtUSD(d.implied_valuation);
     const usdt = (d.products || []).find(p => p.coin === 'USDT');
     $('heroPrice').textContent = (usdt ? usdt.price : 590) + ' USDT';
@@ -944,6 +981,7 @@ function renderHero() {
 
   const candles = normalizeCandles(state.kline);
   if (candles.length) {
+    $('heroSpot').classList.remove('skeleton');
     const last = candles[candles.length - 1].c;
     const first = candles[0].c;
     const delta = last - first;
