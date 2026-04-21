@@ -93,6 +93,7 @@
     box-shadow:0 2px 8px rgba(0,102,255,.3);
   }
   .quick-btns button.active:hover { background:var(--c-primary-dark); }
+  .quick-btns-small button { padding:3px 10px; font-size:11px; }
   .card {
     background:var(--c-card); border:1px solid var(--c-border); border-radius:var(--radius-lg);
     padding:24px; margin-bottom:16px; box-shadow:var(--shadow);
@@ -228,9 +229,10 @@
     border-radius:var(--radius); padding:12px 14px;
   }
   .field-secondary .ttl { font-size:11px; color:var(--c-sub); margin-bottom:6px; }
-  .field-secondary input[type="number"] {
-    font-size:13px; padding:8px 10px; background:var(--c-card);
+  .field-secondary .input-with-suffix input[type="number"] {
+    font-size:13px; padding:8px 54px 8px 12px; background:var(--c-card);
   }
+  .field-secondary .input-with-suffix .suffix { right:12px; }
   /* 滑杆字段视觉强化 */
   .field-slider { padding:4px 0; }
   .field label.ttl { display:block; color:var(--c-text); font-size:13px; font-weight:600; margin-bottom:8px; }
@@ -888,6 +890,12 @@
           <input id="finalInvest" type="number" step="1000" min="0" placeholder="—" />
           <span id="finalInvestSuffix" class="suffix">USDT</span>
         </div>
+        <div class="quick-btns quick-btns-small">
+          <button type="button" data-fi-add="10000000"><span data-i18n="estimator.add10m">+1千万</span></button>
+          <button type="button" data-fi-add="100000000"><span data-i18n="estimator.add100m">+1亿</span></button>
+          <button type="button" data-fi-mult="1.5"><span>×1.5</span></button>
+          <button type="button" data-fi-mult="2"><span>×2</span></button>
+        </div>
         <div class="amount-formatted" id="finalInvestFormatted"></div>
       </div>
     </div>
@@ -1182,6 +1190,8 @@ const I18N = {
     'estimator.finalPool': '假设池子最终总投入',
     'estimator.useLive': '使用实时值',
     'estimator.finalPoolHint': '实时 {coin} · 输入你预计结束时的池子总额模拟中签率',
+    'estimator.add10m': '+1千万',
+    'estimator.add100m': '+1亿',
     'estimator.hour': '投入时间',
     'estimator.hourHint': '按 48 小时平均锁仓计算，越早投入权重越高',
     'estimator.qStart': '开始时投入',
@@ -1296,6 +1306,8 @@ const I18N = {
     'estimator.finalPool': 'Assumed Final Pool Total',
     'estimator.useLive': 'Use live',
     'estimator.finalPoolHint': 'Live {coin} · set your projected end-of-window total to simulate',
+    'estimator.add10m': '+10M',
+    'estimator.add100m': '+100M',
     'estimator.hour': 'Entry Time',
     'estimator.hourHint': 'Weighted by 48h average lockup · the earlier you invest, the higher your weight',
     'estimator.qStart': 'At Start',
@@ -2284,6 +2296,28 @@ $('resetFinalBtn').addEventListener('click', () => {
   state.finalInvestTouched = false;
   $('finalInvest').value = '';
   renderEstimator();
+});
+
+document.querySelectorAll('.quick-btns-small button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const fiEl = $('finalInvest');
+    // 基线：当前输入值 > 0 就用它，否则用 live invest_amount
+    const inputs = readInputs();
+    const refPool = inputs.pool === 'compare' ? 'USDT' : inputs.pool;
+    const coinVal = (state.api && state.api.data && (state.api.data.products || []).find(x => x.coin === refPool));
+    const live = coinVal ? +coinVal.invest_amount || 0 : 0;
+    const cur = parseFloat(fiEl.value);
+    const base = isFinite(cur) && cur > 0 ? cur : live;
+    const add = Number(btn.getAttribute('data-fi-add'));
+    const mul = Number(btn.getAttribute('data-fi-mult'));
+    let next;
+    if (add) next = base + add;
+    else if (mul) next = base * mul;
+    else return;
+    fiEl.value = Math.round(next);
+    state.finalInvestTouched = true;
+    renderEstimator();
+  });
 });
 document.querySelectorAll('input[name="pool"]').forEach(el => {
   el.addEventListener('change', () => { renderEstimator(); persist(); });
